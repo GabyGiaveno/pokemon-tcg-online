@@ -1,0 +1,398 @@
+@startuml 04-persistencia-servicios
+title Diagrama de Clases — Capa de Persistencia, Servicios y Controllers
+
+skinparam backgroundColor #FAFAFA
+skinparam class {
+    BackgroundColor #DDEEFF
+    BorderColor #336699
+    FontColor #333333
+    ArrowColor #336699
+    HeaderBackgroundColor #336699
+    HeaderFontColor #FFFFFF
+}
+skinparam interface {
+    BackgroundColor #FFF9C4
+    BorderColor #F57F17
+    HeaderBackgroundColor #F57F17
+    HeaderFontColor #FFFFFF
+}
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #F9A825
+}
+
+'───────────────────────────────────────────────────────────────
+' JPA ENTITIES
+'───────────────────────────────────────────────────────────────
+
+class Player <<Entity>> {
+    + id : Long
+    + username : String
+    + email : String
+    + passwordHash : String
+    + createdAt : LocalDateTime
+    + decks : List<Deck>
+    + sessionsAsPlayer1 : List<GameSession>
+    --
+    ' @Table(name = "player")
+    ' username: unique, max 50
+    ' email: unique, max 255
+}
+
+class Deck <<Entity>> {
+    + id : Long
+    + name : String
+    + player : Player
+    + isValid : boolean
+    + createdAt : LocalDateTime
+    + cards : List<DeckCard>
+    --
+    ' @Table(name = "deck")
+    ' cards: @OneToMany cascade ALL, orphanRemoval
+    ' isValid: true si pasó todas las validaciones
+}
+
+class DeckCard <<Entity>> {
+    + deck : Deck
+    + card : Card
+    --
+    ' Tabla join deck ↔ card
+}
+
+class Card <<Entity>> {
+    + id : String
+    + name : String
+    + supertype : String
+    + subtypes : List<String>
+    + hp : Integer
+    + types : List<String>
+    + attacks : String
+    + weaknesses : String
+    + resistances : String
+    + retreatCost : List<String>
+    + evolvesFrom : String
+    + cardSet : CardSet
+    + imageUrlLarge : String
+    + imageUrlSmall : String
+    + isAceTactician : boolean
+    --
+    ' @Table(name = "card")
+    ' id: String (ej: "xy1-1")
+    ' attacks/weaknesses/resistances: JSONB en DB
+    ' subtypes/types/retreatCost: text[] en DB
+    ' Cacheada en memoria por CardCacheService
+}
+
+class CardSet <<Entity>> {
+    + id : String
+    + name : String
+    --
+    ' @Table(name = "card_set")
+    ' Ej: {id: "xy1", name: "XY Base Set"}
+}
+
+class GameSession <<Entity>> {
+    + id : Long
+    + player1 : Player
+    + player2 : Player
+    + status : GameStatus
+    + currentPlayerId : Long
+    + prizeCardsCount : int
+    + winner : Player
+    + createdAt : LocalDateTime
+    + finishedAt : LocalDateTime
+    + gameState : GameState
+    + actions : List<GameAction>
+    --
+    ' @Table(name = "game_session")
+    ' status: @Enumerated(EnumType.STRING)
+    ' prizeCardsCount CHECK IN (1, 6)
+    ' gameState: @OneToOne
+}
+
+class GameState <<Entity>> {
+    + id : Long
+    + gameSession : GameSession
+    + stateJson : String
+    + turnNumber : int
+    + turnPhase : TurnPhase
+    + updatedAt : LocalDateTime
+    --
+    ' @Table(name = "game_state")
+    ' stateJson: JSONB — serialización de BoardState
+    ' @OneToOne con GameSession
+}
+
+class GameAction <<Entity>> {
+    --
+    ' Historial de acciones de la partida
+    ' @ManyToOne → GameSession
+}
+
+'───────────────────────────────────────────────────────────────
+' REPOSITORIES
+'───────────────────────────────────────────────────────────────
+
+interface PlayerRepository <<JpaRepository>> {
+    + findByUsername(username) : Optional<Player>
+    + findByEmail(email) : Optional<Player>
+}
+
+interface CardRepository <<JpaRepository>> {
+    + findByCardSetId(setId) : List<Card>
+}
+
+interface CardSetRepository <<JpaRepository>> {
+}
+
+interface DeckRepository <<JpaRepository>> {
+    + findByPlayerId(playerId) : List<Deck>
+}
+
+interface DeckCardRepository <<JpaRepository>> {
+}
+
+interface GameSessionRepository <<JpaRepository>> {
+    + findByPlayer1OrPlayer2(p1, p2) : List<GameSession>
+}
+
+interface GameStateRepository <<JpaRepository>> {
+    + findByGameSessionId(sessionId) : Optional<GameState>
+}
+
+interface GameActionRepository <<JpaRepository>> {
+}
+
+'───────────────────────────────────────────────────────────────
+' DECK VALIDATORS (Chain of Responsibility)
+'───────────────────────────────────────────────────────────────
+
+interface DeckValidator {
+    + validate(cards : List<Card>) : List<DeckValidationError>
+}
+
+class ExactSizeValidator {
+    + validate(cards) : List<DeckValidationError>
+    --
+    ' Debe tener exactamente 60 cartas
+}
+
+class CopyLimitValidator {
+    + validate(cards) : List<DeckValidationError>
+    --
+    ' Máx 4 copias del mismo nombre.
+    ' Excepción: energías básicas (ilimitadas)
+}
+
+class BasicPokemonValidator {
+    + validate(cards) : List<DeckValidationError>
+    --
+    ' Al menos 1 Pokémon básico en el mazo
+}
+
+class AceTacticianValidator {
+    + validate(cards) : List<DeckValidationError>
+    --
+    ' Máx 1 AS Táctico (Supporter especial) por mazo
+}
+
+'───────────────────────────────────────────────────────────────
+' SERVICES
+'───────────────────────────────────────────────────────────────
+
+class CardCacheService <<Service>> {
+    + findById(cardId : String) : Card
+    + loadAllCards() : void
+    --
+    ' Cachea en memoria las Cards desde DB.
+    ' Es el origen del CardLookup en producción:
+    '   CardLookup lookup = cardCacheService::findById
+    ' Permite que el engine no dependa de Spring/JPA.
+}
+
+class DeckService <<Service>> {
+    + createDeck(request) : DeckResponse
+    + updateDeck(deckId, request) : DeckResponse
+    + validateDeck(deckId) : DeckResponse
+    + getPlayerDecks(playerId) : List<DeckResponse>
+    + getDeckById(deckId) : DeckResponse
+    --
+    ' Aplica todos los DeckValidators en cadena.
+    ' Actualiza isValid en la entidad Deck.
+}
+
+class PlayerService <<Service>> {
+    + register(request : RegisterRequest) : PlayerResponse
+    + login(request : LoginRequest) : String
+    + getById(id : Long) : PlayerResponse
+    --
+    ' Autenticación básica.
+    ' Devuelve token en login.
+}
+
+class GameService <<Service, stub>> {
+    --
+    ' STUB — pendiente de implementar.
+    ' Responsabilidades futuras:
+    '   - createGame(playerId) → GameSession
+    '   - joinGame(sessionId, playerId)
+    '   - processAction(sessionId, action, playerId)
+    '   - getGameState(sessionId) → BoardStateDTO
+    '   - Serializar/deserializar BoardState ↔ stateJson
+    '   - Llamar TurnManager via GameEngineFacade
+    '   - Publicar eventos via GameEventPublisher
+}
+
+class PokemonTCGApiService <<Service>> {
+    + importSet(setId : String) : void
+    + fetchCard(cardId : String) : PokemonTCGCardDTO
+    --
+    ' Llama a pokemontcg.io para importar cartas.
+    ' Persiste en Card y CardSet.
+}
+
+class GameEventPublisher <<Service, stub>> {
+    --
+    ' STUB — pendiente de implementar.
+    ' Futuro: escucha List<GameEvent> desde GameService
+    ' y los retransmite por STOMP/WebSocket a los jugadores.
+    ' Topic: /topic/game/{sessionId}/events
+}
+
+'───────────────────────────────────────────────────────────────
+' CONTROLLERS
+'───────────────────────────────────────────────────────────────
+
+class GameController <<RestController>> {
+    + createGame(playerId) : GameSessionResponse
+    + joinGame(sessionId, request) : GameSessionResponse
+    + processAction(sessionId, action) : ActionResult
+    + getGameState(sessionId) : BoardStateDTO
+}
+
+class GameWebSocketController <<Controller>> {
+    + handleAction(sessionId, action, playerId)
+    --
+    ' STOMP endpoint: /app/game/{id}/action
+    ' Respuesta por: /topic/game/{id}/events
+}
+
+class AuthController <<RestController>> {
+    + register(request) : PlayerResponse
+    + login(request) : String
+}
+
+class CardController <<RestController>> {
+    + getCards(setId) : List<CardResponse>
+    + getCard(cardId) : CardResponse
+}
+
+class DeckController <<RestController>> {
+    + createDeck(request) : DeckResponse
+    + validateDeck(deckId) : DeckResponse
+    + getPlayerDecks(playerId) : List<DeckResponse>
+}
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — ENTIDADES
+'───────────────────────────────────────────────────────────────
+
+Player "1" --> "*" Deck : owns
+Player "1" --> "*" GameSession : plays as P1/P2/winner
+
+Deck "1" --> "*" DeckCard : contains
+Deck --> Player : belongs to
+
+DeckCard --> Card : references
+DeckCard --> Deck : belongs to
+
+Card --> CardSet : belongs to
+
+GameSession --> Player : player1
+GameSession --> Player : player2
+GameSession --> Player : winner
+GameSession "1" --> "1" GameState : 1-to-1
+GameSession "1" --> "*" GameAction : history
+
+GameState --> GameSession
+GameState --> TurnPhase
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — REPOSITORIES
+'───────────────────────────────────────────────────────────────
+
+PlayerRepository ..> Player
+CardRepository ..> Card
+CardSetRepository ..> CardSet
+DeckRepository ..> Deck
+DeckCardRepository ..> DeckCard
+GameSessionRepository ..> GameSession
+GameStateRepository ..> GameState
+GameActionRepository ..> GameAction
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — VALIDATORS
+'───────────────────────────────────────────────────────────────
+
+ExactSizeValidator ..|> DeckValidator
+CopyLimitValidator ..|> DeckValidator
+BasicPokemonValidator ..|> DeckValidator
+AceTacticianValidator ..|> DeckValidator
+
+DeckService --> DeckValidator : applies all validators
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — SERVICES ↔ REPOSITORIES
+'───────────────────────────────────────────────────────────────
+
+CardCacheService --> CardRepository : loads from
+DeckService --> DeckRepository : reads/writes
+DeckService --> CardRepository : reads
+PlayerService --> PlayerRepository : reads/writes
+GameService --> GameSessionRepository : manages (TODO)
+GameService --> GameStateRepository : persists (TODO)
+PokemonTCGApiService --> CardRepository : persists to
+PokemonTCGApiService --> CardSetRepository : persists to
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — CONTROLLERS ↔ SERVICES
+'───────────────────────────────────────────────────────────────
+
+GameController --> GameService : delegates (TODO)
+GameWebSocketController --> GameService : delegates (TODO)
+GameWebSocketController --> GameEventPublisher : publishes (TODO)
+AuthController --> PlayerService : delegates
+CardController --> CardCacheService : reads
+DeckController --> DeckService : delegates
+
+'───────────────────────────────────────────────────────────────
+' BRIDGE ENGINE ↔ SPRING
+'───────────────────────────────────────────────────────────────
+
+CardCacheService ..> CardLookup : provides via\nmethod reference
+
+note right of GameService
+  STUB crítico — es el nexo entre:
+  • HTTP/WebSocket (controllers)
+  • Engine (TurnManager via GameEngineFacade)
+  • Persistencia (GameState serializado)
+  Este es el próximo componente a implementar.
+end note
+
+note right of CardCacheService
+  Bridge Spring ↔ engine:
+  CardLookup lookup = cardCacheService::findById;
+  Permite que TurnManager no dependa de Spring.
+end note
+
+note bottom of GameState
+  BoardState se serializa completo como JSONB.
+  Permite recuperar el estado de partida
+  ante reconexiones o reinicios del servidor.
+end note
+
+interface CardLookup <<FunctionalInterface>> {
+    + findById(cardId : String) : Card
+}
+
+@enduml

@@ -1,0 +1,99 @@
+@startuml 01-estado-juego
+title Diagrama de Estados — Pokémon TCG Engine
+
+skinparam backgroundColor #FAFAFA
+skinparam state {
+    BackgroundColor #DDEEFF
+    BorderColor #336699
+    FontColor #333333
+    ArrowColor #336699
+}
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #F9A825
+}
+
+'───────────────────────────────────────────────────────────────
+' NIVEL 1: GameStatus — ciclo de vida de la partida
+'───────────────────────────────────────────────────────────────
+
+state "WAITING" as WAITING : Player 1 creó la partida.\nEsperando que Player 2 se una.
+state "SETUP" as SETUP : Ambos jugadores colocan\nActivo y Prize Cards (6 c/u).
+state "FINISHED" as FINISHED : Partida terminada.\nboardState.winnerId != null
+
+'───────────────────────────────────────────────────────────────
+' NIVEL 2: TurnPhase — ciclo interno del turno (dentro de ACTIVE)
+'───────────────────────────────────────────────────────────────
+
+state "ACTIVE" as ACTIVE {
+
+    state "DRAW" as DRAW : 1. resetTurnFlags()\n   clear enteredThisTurn\n2. playerTurnCount++  turnNumber++\n3. [P1 primer turno] skip draw\n4. [deck vacío] → FINISHED (deck-out)\n5. deck.remove(0) → hand.add()
+
+    state "MAIN" as MAIN : Espera acción del jugador.\nAcciones válidas:\n  PLAY_BASIC_POKEMON\n  EVOLVE_POKEMON\n  ATTACH_ENERGY\n  ATTACH_TOOL\n  RETREAT\n  PLAY_ITEM  ⚠ stub\n  PLAY_SUPPORTER  ⚠ stub\n  PLAY_STADIUM  ⚠ stub
+
+    state "ATTACK" as ATTACK {
+        state "1. EnergyValidationHandler" as H1 : Two-pass: tipos específicos → Colorless.\nSin energía suficiente → cancelAttack()
+        state "2. ConfusionCheckHandler" as H2 : CONFUSED: coin flip.\nTails → 30 self-dmg + cancelAttack()
+        state "3. SelectionsHandler" as H3 : Target = Active rival.\nTODO: bench-targeting (snipe)
+        state "4. PreAttackHandler" as H4 : STUB — discard costs\n+ coin-flip bonuses
+        state "5. ModifierHandler" as H5 : STUB — Tool/Stadium\nflat damage modifiers
+        state "6. DamageApplicationHandler" as H6 : finalDamage = DamageCalculator.calculate()\nbase → weakness ×2 → resistance −20\ndefenderPokemon.currentHp -= finalDamage
+        state "7. PostDamageHandler\n[alwaysRun = true]" as H7 : Condiciones por keyword en attackData.text.\nKO check defensor + KO check atacante\n(puede morir por auto-daño de confusión)
+
+        H1 --> H2
+        H2 --> H3 : HEADS / no confusión
+        H2 --> H7 : TAILS (cancelAttack)
+        H3 --> H4
+        H4 --> H5
+        H5 --> H6
+        H6 --> H7
+    }
+
+    state "BETWEEN_TURNS" as BETWEEN : 1. POISON → 10 dmg\n2. BURN → flip (heads=cura / tails=20dmg)\n3. ASLEEP → flip (heads=despierta)\n4. PARALYZED → auto-cura\n5. KnockoutProcessor.processIfKnockedOut()\n6. P1 turn 1 → firstPlayerHasActed = true
+
+    [*] --> DRAW : beginTurn()
+    DRAW --> MAIN : Carta robada\n(o skip P1 turno 1)
+    DRAW -[#red]-> [*] : Deck vacío\n→ matchState = FINISHED
+
+    MAIN --> MAIN : Acción jugada\n(la fase no cambia)
+    MAIN --> ATTACK : USE_ATTACK\n(RuleValidator.validateUseAttack() primero)
+    MAIN --> BETWEEN : END_TURN
+    MAIN -[#red]-> [*] : CONCEDE\n→ matchState = FINISHED
+
+    ATTACK --> BETWEEN : Ataque resuelto\n(attackedThisTurn = true)
+
+    BETWEEN --> DRAW : switchActivePlayer()\nbeginTurn() del rival
+    BETWEEN -[#red]-> [*] : KO → todas las prizes tomadas\no sin Pokémon en juego\n→ matchState = FINISHED
+}
+
+'───────────────────────────────────────────────────────────────
+' TRANSICIONES TOP-LEVEL
+'───────────────────────────────────────────────────────────────
+
+[*] --> WAITING : GameSession creada por Player 1
+WAITING --> SETUP : Player 2 hace JOIN
+SETUP --> ACTIVE : Ambos jugadores listos
+ACTIVE --> FINISHED : Condición de victoria alcanzada
+FINISHED --> [*]
+
+note right of WAITING
+  GameSession existe en DB.
+  BoardState aún no existe.
+end note
+
+note right of FINISHED
+  Causas posibles:
+  • Deck-out en DRAW phase
+  • Todas las prizes tomadas (KO)
+  • Sin Pokémon en juego (KO)
+  • CONCEDE en MAIN phase
+  • VictoryConditionChecker (safety net)
+end note
+
+note bottom of BETWEEN
+  Orden estricto según reglas oficiales:
+  POISON → BURN → ASLEEP → PARALYZED
+  CONFUSED se maneja en el pipeline de ataque (H2)
+end note
+
+@enduml

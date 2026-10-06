@@ -1,0 +1,54 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Backend: Java 21, Spring Boot 4.0.0, Maven (mvnw). JPA/Hibernate, Flyway,
+  Postgres (prod) / H2 (perfil dev). Seguridad JWT stateless + STOMP/SockJS WebSocket.
+  Lombok. Frontend: Angular 20 (proxy /api y /ws -> :8080).
+  Tests: JUnit 5 + Mockito (BE), Karma/Jasmine (FE). Cobertura JaCoCo. Checkstyle + PMD.
+  Arquitectura: engine Java puro (sin Spring/BD); frontera CardLookup. Ver ARCHITECTURE.md
+  y docs/project/PROJECT_CONSTITUTION.md.
+
+strict_tdd: true
+
+testing:
+  test_runner:
+    backend: "cd BE && ./mvnw.cmd test"
+    frontend: "cd FE && npm test"
+  framework:
+    backend: "JUnit 5 + Mockito (spring-boot-starter-test)"
+    frontend: "Karma + Jasmine (ng test)"
+  layers:
+    unit: true
+    integration: true   # BE: @SpringBootTest / MockMvc (ej. AuthRecoveryIntegrationTest)
+    e2e: false
+  coverage:
+    backend: "cd BE && ./mvnw.cmd verify  # JaCoCo -> target/site/jacoco/index.html"
+  quality:
+    linter: "Checkstyle 3.3.0 + PMD (.code_quality/checkstyle_rules.xml)"
+    type_checker: "javac / tsc (Angular build)"
+    formatter: "prettier (FE)"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Conventional Commits; no AI attribution
+    - Engine stays Java-pure (no Spring/DB) — this change does NOT touch engine/
+  verify:
+    - Run BE tests; compare implementation against every spec scenario
+    - Coverage minimums: engine >= 70%, services >= 60%
+  archive:
+    - Warn before merging destructive deltas (large removals)

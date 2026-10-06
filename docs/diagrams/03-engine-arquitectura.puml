@@ -1,0 +1,502 @@
+@startuml 03-engine-arquitectura
+title Diagrama de Clases — Engine Architecture (Patrón State + Chain of Responsibility)
+
+skinparam backgroundColor #FAFAFA
+skinparam class {
+    BackgroundColor #DDEEFF
+    BorderColor #336699
+    FontColor #333333
+    ArrowColor #336699
+    HeaderBackgroundColor #336699
+    HeaderFontColor #FFFFFF
+}
+skinparam interface {
+    BackgroundColor #FFF9C4
+    BorderColor #F57F17
+    HeaderBackgroundColor #F57F17
+    HeaderFontColor #FFFFFF
+}
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #F9A825
+}
+
+'───────────────────────────────────────────────────────────────
+' INTERFACES (puros Java, sin Spring)
+'───────────────────────────────────────────────────────────────
+
+interface CardLookup <<FunctionalInterface>> {
+    + findById(cardId : String) : Card
+    --
+    ' Bridge Spring ↔ engine
+    ' En prod: cardCacheService::findById
+    ' En tests: testCards::get
+}
+
+interface GamePhaseState {
+    + getPhase() : TurnPhase
+    + handle(action, board, playerId, cardLookup) : ActionResult
+    + execute(board, cardLookup) : List<GameEvent>
+    --
+    ' handle() → UnsupportedOperationException (default)
+    ' execute() → UnsupportedOperationException (default)
+    ' Fases interactivas sobrescriben handle()
+    ' Fases automáticas sobrescriben execute()
+}
+
+interface AttackHandler {
+    + handle(context : AttackContext) : void
+    + alwaysRun() : boolean
+    --
+    ' alwaysRun() default = false
+    ' Solo PostDamageHandler override = true
+}
+
+interface AttackEffect <<pending>> {
+    ' TODO: Strategy para efectos de ataque
+    ' (pre-attack discards, coin-flip bonuses)
+}
+
+interface TrainerEffect <<pending>> {
+    ' TODO: Strategy para efectos de Trainer
+    ' (ITEM, SUPPORTER, STADIUM)
+}
+
+'───────────────────────────────────────────────────────────────
+' ENGINE CORE
+'───────────────────────────────────────────────────────────────
+
+class TurnManager {
+    - drawPhase : DrawPhaseState
+    - mainPhase : MainPhaseState
+    - attackPhase : AttackPhaseState
+    - betweenTurnsPhase : BetweenTurnsState
+    --
+    + TurnManager()
+    + TurnManager(draw, main, attack, between)
+    + beginTurn(board, cardLookup) : List<GameEvent>
+    + processAction(action, board, playerId, cardLookup) : ActionResult
+    - handleAttackFlow(...) : ActionResult
+    - handleEndTurnFlow(...) : ActionResult
+    - handleConcede(...) : ActionResult
+    - completeTurn(...) : ActionResult
+    - resetTurnFlags(board) : void
+    - switchActivePlayer(board) : void
+    - getActiveField(board) : PlayerField
+    - getOpponentField(board) : PlayerField
+    --
+    ' Punto de entrada principal del engine.
+    ' Sin Spring (@Component), testeable puro.
+}
+
+class GameEngineFacade <<stub>> {
+    --
+    ' TODO: Facade + Spring @Service
+    ' Conectará GameWebSocketController con TurnManager.
+    ' Inyectará CardLookup = cardCacheService::findById
+    ' Gestionará serialización/deserialización de BoardState
+}
+
+class RuleValidator <<utility>> {
+    + {static} validatePlayBasicPokemon(card, field) : void
+    + {static} validateEvolvePokemon(evoCard, targetCard, enteredThisTurn, field) : void
+    + {static} validateAttachEnergy(card, field) : void
+    + {static} validateAttachTool(card, alreadyHasTool) : void
+    + {static} validateRetreat(active, retreatCostSize, benchIndex, field) : void
+    + {static} validateUseAttack(board, actorField) : void
+    + {static} requireCardInHand(cardId, field) : void
+    --
+    ' Todos los métodos son static void.
+    ' Lanzan InvalidActionException(errorCode, msg) al fallar.
+    ' Sin estado, sin Spring, testeable con assertThrows.
+}
+
+class StatusEffectManager {
+    - random : Random
+    --
+    + StatusEffectManager()
+    + StatusEffectManager(random : Random)
+    + applyBetweenTurnEffects(pokemon) : List<GameEvent>
+    + applyCondition(pokemon, condition) : void
+    + clearAllConditions(pokemon) : void
+    - applyDamage(pokemon, damage) : void
+    --
+    ' Orden estricto: POISON → BURN → ASLEEP → PARALYZED
+    ' Random inyectable para tests deterministas
+}
+
+class KnockoutProcessor {
+    + processIfKnockedOut(pokemon, ownerField, opponentField, board) : List<GameEvent>
+    --
+    ' Secuencia KO:
+    ' 1. Emite POKEMON_KNOCKED_OUT
+    ' 2. Descarta pokémon + energías + tool
+    ' 3. ownerField.activePokemon = null
+    ' 4. Rival toma 1 Prize Card (TODO: player choice)
+    ' 5. Check: todas las prizes → FINISHED
+    ' 6. Auto-promueve bench[0] (TODO: player choice)
+    ' 7. Check: sin Pokémon → FINISHED
+    ' TODO: EX/MEGA → 2 Prize Cards
+}
+
+class VictoryConditionChecker {
+    + checkVictoryConditions(board) : boolean
+    - hasNoPokemon(field) : boolean
+    --
+    ' Safety net — verifica las 3 condiciones de victoria:
+    ' 1. Sin Pokémon en juego (active == null && bench empty)
+    ' 2. Todas las prizes tomadas (prizeCards.isEmpty())
+    ' 3. Deck vacío (verificado en DrawPhaseState)
+}
+
+'───────────────────────────────────────────────────────────────
+' PATRÓN STATE — 4 implementaciones
+'───────────────────────────────────────────────────────────────
+
+class DrawPhaseState {
+    + getPhase() : TurnPhase
+    + execute(board, cardLookup) : List<GameEvent>
+    --
+    ' Automática — no recibe input del jugador.
+    ' playerTurnCount++ / turnNumber++
+    ' P1 turno 1 → skip draw
+    ' Deck vacío → FINISHED + DECK_OUT event
+    ' deck.remove(0) → hand.add(cardId)
+}
+
+class MainPhaseState {
+    + getPhase() : TurnPhase
+    + handle(action, board, playerId, cardLookup) : ActionResult
+    --
+    ' 8 acciones manejadas:
+    ' PLAY_BASIC_POKEMON: basic + bench < 5
+    ' EVOLVE_POKEMON: evolvesFrom match + turno > 1
+    ' ATTACH_ENERGY: 1 por turno max
+    ' ATTACH_TOOL: sin tool previa
+    ' RETREAT: no retreated + no PARALYZED/ASLEEP + energía suficiente
+    ' PLAY_ITEM: ⚠ TrainerEffectRegistry pendiente
+    ' PLAY_SUPPORTER: ⚠ 1 por turno, TrainerEffectRegistry pendiente
+    ' PLAY_STADIUM: ⚠ TrainerEffectRegistry pendiente
+    --
+    ' EVOLVE: preserva daño, limpia condiciones, enteredThisTurn = false
+    ' RETREAT: descarta energías de retirada, promueve bench[benchIndex]
+}
+
+class AttackPhaseState {
+    - attackChain : AttackResolutionChain
+    --
+    + getPhase() : TurnPhase
+    + handle(action, board, playerId, cardLookup) : ActionResult
+    --
+    ' Solo acepta USE_ATTACK.
+    ' attackedThisTurn = true
+    ' Delega a attackChain.resolve()
+}
+
+class BetweenTurnsState {
+    - statusEffectManager : StatusEffectManager
+    - knockoutProcessor : KnockoutProcessor
+    --
+    + getPhase() : TurnPhase
+    + execute(board, cardLookup) : List<GameEvent>
+    --
+    ' Automática — sin input del jugador.
+    ' 1. applyBetweenTurnEffects(activePokemon)
+    ' 2. processIfKnockedOut() si HP <= 0
+    ' 3. firstPlayerHasActed = true (P1 turno 1)
+}
+
+'───────────────────────────────────────────────────────────────
+' CHAIN OF RESPONSIBILITY — orquestador + 7 handlers
+'───────────────────────────────────────────────────────────────
+
+class AttackResolutionChain {
+    - random : Random
+    - knockoutProcessor : KnockoutProcessor
+    --
+    + AttackResolutionChain()
+    + AttackResolutionChain(random, knockoutProcessor)
+    + resolve(action, board, attackerPlayerId, cardLookup) : List<GameEvent>
+    - buildContext(...) : AttackContext
+    - buildPipeline() : List<AttackHandler>
+    - resolveField(board, playerId) : PlayerField
+    - resolveOpponentField(board, playerId) : PlayerField
+    --
+    ' Regla de cancelación:
+    ' if (ctx.isAttackCancelled() && !handler.alwaysRun()) continue;
+    ' buildPipeline() se llama en cada resolve() → stateless
+}
+
+class AttackContext {
+    ' ── Inmutables (seteados por buildContext) ──
+    + board : BoardState
+    + attackerPlayerId : Long
+    + cardLookup : CardLookup
+    + attackerField : PlayerField
+    + defenderField : PlayerField
+    + attackerPokemon : ActivePokemon
+    + defenderPokemon : ActivePokemon
+    + attackerCard : Card
+    + defenderCard : Card
+    + attackData : AttackData
+    ' ── Mutables (modificados por handlers) ──
+    + attackCancelled : boolean
+    + finalDamage : int
+    + events : List<GameEvent>
+    --
+    + cancelAttack() : void
+    + addEvent(event) : void
+}
+
+class AttackData {
+    + name : String
+    + cost : List<String>
+    + convertedEnergyCost : int
+    + damage : String
+    + text : String
+    --
+    + getBaseDamage() : int
+    + hasEffect() : boolean
+    + hasDamageModifier() : boolean
+    + getCost() : List<String>
+    --
+    ' damage: "120", "10×", "30+", ""
+    ' getBaseDamage(): extrae solo los dígitos iniciales
+}
+
+class AttackParser <<utility>> {
+    + {static} parse(jsonb : String) : List<AttackData>
+    --
+    ' Deserializa card.attacks (JSONB) → List<AttackData>
+    ' ObjectMapper static final (thread-safe)
+    ' Retorna emptyList() en null/blank/error
+}
+
+class DamageCalculator <<utility>> {
+    + {static} calculate(base, attackerCard, defenderCard) : int
+    --
+    ' Fórmula XY era (orden estricto):
+    ' 1. base damage
+    ' 2. Weakness: tipo atacante matches → damage × 2
+    ' 3. Resistance: tipo atacante matches → damage − 20
+    ' 4. return max(0, damage)
+    ' Parsea weaknesses/resistances (JSONB) con Jackson.
+    ' Soporta "×2", "x2", "X2", "+N" (sets viejos).
+}
+
+'───────────────────────────────────────────────────────────────
+' 7 HANDLERS
+'───────────────────────────────────────────────────────────────
+
+class EnergyValidationHandler {
+    + handle(ctx) : void
+    --
+    ' Two-pass para energías:
+    ' Pass 1: tipos específicos (no Colorless) → match exacto
+    ' Pass 2: Colorless → cualquier energía restante
+    ' Fallo → cancelAttack() + ATTACK_DECLARED(INSUFFICIENT_ENERGY)
+}
+
+class ConfusionCheckHandler {
+    - random : Random
+    --
+    + ConfusionCheckHandler(random)
+    + handle(ctx) : void
+    --
+    ' Si condition != CONFUSED → no hace nada
+    ' CONFUSED + HEADS → ATTACK_DECLARED (pasa confusión)
+    ' CONFUSED + TAILS → 30 self-dmg + cancelAttack()
+    '   (PostDamageHandler igual corre por alwaysRun)
+}
+
+class SelectionsHandler {
+    + handle(ctx) : void
+    --
+    ' Target default = Active del rival (ya en ctx).
+    ' Emite ATTACK_DECLARED con attacker/attack/defender.
+    ' TODO: leer action.targetPosition para bench targeting
+}
+
+class PreAttackHandler {
+    + handle(ctx) : void
+    --
+    ' STUB — no implementado.
+    ' Futuro: AttackEffectRegistry
+    '   - Discard costs antes del ataque
+    '   - Coin flips de bonificación de daño
+}
+
+class ModifierHandler {
+    + handle(ctx) : void
+    --
+    ' STUB — no implementado.
+    ' Futuro: AttackModifierRegistry
+    '   - Muscle Band: +20 daño
+    '   - Hard Charm: −20 daño al defensor
+    '   - Inmunidades por habilidades
+}
+
+class DamageApplicationHandler {
+    + handle(ctx) : void
+    --
+    ' Si baseDamage == 0 → return (ataque de efecto puro)
+    ' finalDamage = DamageCalculator.calculate()
+    ' ctx.finalDamage = finalDamage
+    ' defenderPokemon.currentHp = max(0, hp - finalDamage)
+    ' Emite DAMAGE_DEALT(baseDamage, finalDamage, hpRemaining)
+}
+
+class PostDamageHandler {
+    - knockoutProcessor : KnockoutProcessor
+    --
+    + PostDamageHandler(knockoutProcessor)
+    + handle(ctx) : void
+    + alwaysRun() : boolean
+    --
+    ' alwaysRun() = true (corre aunque attackCancelled = true)
+    ' 1. Condiciones por keyword (solo si NO cancelado):
+    '    "is now asleep" → ASLEEP
+    '    "is now paralyzed" → PARALYZED
+    '    "is now confused" → CONFUSED
+    '    "is now burned" → isBurned = true
+    '    "is now poisoned" → isPoisoned = true
+    ' 2. KO check del defensor
+    ' 3. KO check del atacante (auto-daño confusión)
+    ' TODO: reemplazar keyword detection con AttackEffectRegistry
+}
+
+'───────────────────────────────────────────────────────────────
+' FACTORIES
+'───────────────────────────────────────────────────────────────
+
+class PokemonFactory <<Singleton>> {
+    - {static} INSTANCE : PokemonFactory
+    --
+    - PokemonFactory()
+    + {static} getInstance() : PokemonFactory
+    + createActivePokemon(card : Card) : ActivePokemon
+    + createBenchPokemon(card : Card) : BenchPokemon
+    --
+    ' Ambos métodos setean enteredThisTurn = true.
+    ' Sin Spring — testeable directamente.
+}
+
+class PlayerFieldBuilder <<Builder>> {
+    - secureRandom : SecureRandom
+    - playerId : Long
+    - initialCards : List<Card>
+    - prizeCardsCount : int = 6
+    --
+    + withPlayerId(Long) : PlayerFieldBuilder
+    + withCards(List<Card>) : PlayerFieldBuilder
+    + withSuddenDeath() : PlayerFieldBuilder
+    + build() : PlayerField
+    --
+    ' build(): shuffle → 7 para mano → 6 para prizes → resto = deck
+    ' withSuddenDeath(): prizeCardsCount = 1
+    ' Lanza IllegalArgumentException si cards != 60
+}
+
+class CardTypeResolver <<utility>> {
+    + {static} resolve(card : Card) : CardType
+    --
+    ' Resuelve Card (JPA) → CardType (domain enum).
+    ' Lógica:
+    '   isAceTactician → ACE_TACTICIAN
+    '   supertype="Pokémon" + name starts "M " → MEGA_POKEMON
+    '   supertype="Pokémon" + name ends "-EX" → POKEMON_EX
+    '   supertype="Pokémon" + subtype Stage2 → STAGE2
+    '   supertype="Pokémon" + subtype Stage1 → STAGE1
+    '   supertype="Pokémon" → BASIC_POKEMON
+    '   supertype="Energy" + subtype Special → SPECIAL_ENERGY
+    '   supertype="Energy" → BASIC_ENERGY
+    '   supertype="Trainer" + subtype Supporter → SUPPORTER
+    '   supertype="Trainer" + subtype Stadium → STADIUM
+    '   supertype="Trainer" + subtype Tool → POKEMON_TOOL
+    '   supertype="Trainer" → ITEM
+}
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — STATE PATTERN
+'───────────────────────────────────────────────────────────────
+
+DrawPhaseState ..|> GamePhaseState : implements
+MainPhaseState ..|> GamePhaseState : implements
+AttackPhaseState ..|> GamePhaseState : implements
+BetweenTurnsState ..|> GamePhaseState : implements
+
+TurnManager --> DrawPhaseState : uses
+TurnManager --> MainPhaseState : uses
+TurnManager --> AttackPhaseState : uses
+TurnManager --> BetweenTurnsState : uses
+TurnManager ..> CardLookup : uses
+TurnManager ..> RuleValidator : validates
+
+GameEngineFacade ..> TurnManager : TODO delegate
+GameEngineFacade ..> CardLookup : TODO inject
+
+AttackPhaseState --> AttackResolutionChain : delegates to
+BetweenTurnsState --> StatusEffectManager : uses
+BetweenTurnsState --> KnockoutProcessor : uses
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — CHAIN OF RESPONSIBILITY
+'───────────────────────────────────────────────────────────────
+
+EnergyValidationHandler ..|> AttackHandler
+ConfusionCheckHandler ..|> AttackHandler
+SelectionsHandler ..|> AttackHandler
+PreAttackHandler ..|> AttackHandler
+ModifierHandler ..|> AttackHandler
+DamageApplicationHandler ..|> AttackHandler
+PostDamageHandler ..|> AttackHandler
+
+AttackResolutionChain --> KnockoutProcessor : injects into PostDamageHandler
+AttackResolutionChain ..> AttackHandler : builds pipeline
+AttackResolutionChain ..> AttackContext : creates
+
+PostDamageHandler --> KnockoutProcessor : processIfKnockedOut()
+DamageApplicationHandler ..> DamageCalculator : calculate()
+
+AttackContext --> AttackData : attackData
+AttackContext ..> CardLookup
+
+AttackParser ..> AttackData : creates
+CardLookup ..> Card : findById()
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES — FACTORIES y STRATEGY
+'───────────────────────────────────────────────────────────────
+
+PokemonFactory ..> Card : reads
+PokemonFactory ..> ActivePokemon : creates
+PokemonFactory ..> BenchPokemon : creates
+PlayerFieldBuilder ..> PlayerField : builds
+CardTypeResolver ..> Card : reads
+CardTypeResolver ..> CardType : returns
+
+PreAttackHandler ..> AttackEffect : TODO
+MainPhaseState ..> TrainerEffect : TODO
+
+note top of TurnManager
+  Sin anotaciones Spring.
+  Tests sin ApplicationContext:
+  Map<String, Card> cards = Map.of(...)
+  CardLookup lookup = cards::get;
+  new TurnManager()
+end note
+
+note right of PostDamageHandler
+  alwaysRun() = true es CRÍTICO:
+  Si confusión da TAILS → cancelAttack()
+  Sin alwaysRun, este handler se skipea.
+  El atacante podría quedar HP=0 sin KO.
+end note
+
+note bottom of AttackResolutionChain
+  buildPipeline() se llama en cada resolve()
+  → cada ejecución es stateless.
+  Los handlers NO guardan estado entre llamadas.
+end note
+
+@enduml

@@ -1,0 +1,279 @@
+@startuml 02-modelos-tablero
+title Diagrama de Clases — Modelos del Tablero (in-memory, sin Spring)
+
+skinparam backgroundColor #FAFAFA
+skinparam class {
+    BackgroundColor #DDEEFF
+    BorderColor #336699
+    FontColor #333333
+    ArrowColor #336699
+    HeaderBackgroundColor #336699
+    HeaderFontColor #FFFFFF
+}
+skinparam enum {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+    HeaderBackgroundColor #388E3C
+    HeaderFontColor #FFFFFF
+}
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #F9A825
+}
+
+'───────────────────────────────────────────────────────────────
+' ENUMS
+'───────────────────────────────────────────────────────────────
+
+enum GameStatus {
+    WAITING
+    SETUP
+    ACTIVE
+    FINISHED
+}
+
+enum TurnPhase {
+    DRAW
+    MAIN
+    ATTACK
+    BETWEEN_TURNS
+}
+
+enum SpecialCondition {
+    NONE
+    ASLEEP
+    BURNED
+    CONFUSED
+    PARALYZED
+    POISONED
+}
+
+enum ActionType {
+    DRAW_CARD
+    PLAY_BASIC_POKEMON
+    EVOLVE_POKEMON
+    ATTACH_ENERGY
+    USE_ATTACK
+    RETREAT
+    PLAY_ITEM
+    PLAY_SUPPORTER
+    PLAY_STADIUM
+    ATTACH_TOOL
+    TAKE_PRIZE_CARD
+    SETUP_PLACE_POKEMON
+    SETUP_SET_PRIZES
+    END_TURN
+    CONCEDE
+}
+
+enum CardType {
+    BASIC_POKEMON
+    STAGE1
+    STAGE2
+    POKEMON_EX
+    MEGA_POKEMON
+    BASIC_ENERGY
+    SPECIAL_ENERGY
+    ITEM
+    ACE_TACTICIAN
+    SUPPORTER
+    STADIUM
+    POKEMON_TOOL
+}
+
+enum GameEventType {
+    PHASE_CHANGED
+    TURN_ENDED
+    CARD_DRAWN
+    DECK_OUT
+    POKEMON_PLAYED_TO_BENCH
+    POKEMON_EVOLVED
+    ENERGY_ATTACHED
+    TOOL_ATTACHED
+    ITEM_PLAYED
+    SUPPORTER_PLAYED
+    STADIUM_PLAYED
+    POKEMON_RETREATED
+    ATTACK_DECLARED
+    DAMAGE_DEALT
+    STATUS_EFFECT_APPLIED
+    STATUS_EFFECT_CLEARED
+    POKEMON_KNOCKED_OUT
+    PRIZE_TAKEN
+    GAME_FINISHED
+    PLAYER_CONCEDED
+}
+
+'───────────────────────────────────────────────────────────────
+' MODELOS DE ESTADO DEL JUEGO (in-memory, @Builder, @Data)
+'───────────────────────────────────────────────────────────────
+
+class BoardState {
+    + matchState : GameStatus
+    + currentPhase : TurnPhase
+    + currentPlayerId : Long
+    + turnNumber : int
+    + firstPlayerHasActed : boolean
+    + winnerId : Long
+    + player1Field : PlayerField
+    + player2Field : PlayerField
+}
+
+class PlayerField {
+    + playerId : Long
+    + activePokemon : ActivePokemon
+    + bench : List<BenchPokemon>
+    + hand : List<String>
+    + deck : List<String>
+    + prizeCards : List<String>
+    + discardPile : List<String>
+    + turnFlags : TurnFlags
+    + playerTurnCount : int
+    --
+    ' bench máx 5 slots
+    ' hand/deck/prizeCards/discardPile = cardIds (String)
+    ' playerTurnCount == 1 → primer turno (no attack, no evolve)
+}
+
+class ActivePokemon {
+    + cardId : String
+    + maxHp : int
+    + currentHp : int
+    + attachedEnergies : List<AttachedCard>
+    + tool : AttachedCard
+    + condition : SpecialCondition
+    + isBurned : boolean
+    + isPoisoned : boolean
+    + enteredThisTurn : boolean
+    --
+    ' condition: solo NONE/ASLEEP/CONFUSED/PARALYZED
+    ' isBurned/isPoisoned son independientes de condition
+    ' enteredThisTurn: true en el turno que entra al juego
+}
+
+class BenchPokemon {
+    + cardId : String
+    + maxHp : int
+    + currentHp : int
+    + attachedEnergies : List<AttachedCard>
+    + tool : AttachedCard
+    + enteredThisTurn : boolean
+    --
+    ' Sin condition → las condiciones solo afectan al Active
+}
+
+class TurnFlags {
+    + energyAttachedThisTurn : boolean
+    + retreatedThisTurn : boolean
+    + supporterPlayedThisTurn : boolean
+    + attackedThisTurn : boolean
+    --
+    ' Reseteados a false en cada DRAW phase
+    ' shared limit: Supporter y AceTactician usan supporterPlayedThisTurn
+}
+
+class AttachedCard {
+    + cardId : String
+    + type : CardType
+    --
+    ' Representa energía o tool adjunta a un Pokémon
+}
+
+'───────────────────────────────────────────────────────────────
+' DTOs
+'───────────────────────────────────────────────────────────────
+
+class ActionRequest {
+    + type : ActionType
+    + cardId : String
+    + targetPosition : String
+    + attackIndex : Integer
+    + benchIndex : Integer
+    + prizeIndex : Integer
+    --
+    ' targetPosition: "ACTIVE" o "BENCH_0".."BENCH_4"
+    ' Usa targetPosition y no targetCardId para
+    ' evitar ambigüedad con copias del mismo Pokémon
+}
+
+class ActionResult {
+    + success : boolean
+    + error : String
+    + events : List<GameEvent>
+    --
+    + {static} success(events) : ActionResult
+    + {static} failure(error) : ActionResult
+}
+
+class GameEvent {
+    + type : GameEventType
+    + description : String
+    + data : Map<String, Object>
+    + timestamp : long
+    --
+    + {static} of(type, description) : GameEvent
+    + {static} of(type, description, data) : GameEvent
+}
+
+class InvalidActionException <<RuntimeException>> {
+    + errorCode : String
+    + message : String
+    --
+    ' Error codes: NOT_YOUR_TURN, GAME_ALREADY_FINISHED,
+    ' CARD_NOT_IN_HAND, NOT_BASIC_POKEMON, BENCH_FULL,
+    ' NOT_EVOLUTION_CARD, CANNOT_EVOLVE_FIRST_TURN,
+    ' POKEMON_JUST_ENTERED, NOT_ENERGY_CARD,
+    ' ENERGY_ALREADY_ATTACHED, NOT_TOOL_CARD,
+    ' POKEMON_ALREADY_HAS_TOOL, ALREADY_RETREATED,
+    ' NO_ACTIVE_POKEMON, PARALYZED_CANNOT_RETREAT,
+    ' ASLEEP_CANNOT_RETREAT, INVALID_BENCH_INDEX,
+    ' NOT_ENOUGH_ENERGY_TO_RETREAT,
+    ' CANNOT_ATTACK_FIRST_TURN, PARALYZED_CANNOT_ATTACK,
+    ' ASLEEP_CANNOT_ATTACK
+}
+
+'───────────────────────────────────────────────────────────────
+' RELACIONES
+'───────────────────────────────────────────────────────────────
+
+BoardState --> GameStatus : matchState
+BoardState --> TurnPhase : currentPhase
+BoardState "1" *-- "1" PlayerField : player1Field
+BoardState "1" *-- "1" PlayerField : player2Field
+
+PlayerField "1" *-- "0..1" ActivePokemon : activePokemon
+PlayerField "1" *-- "0..5" BenchPokemon : bench
+PlayerField "1" *-- "1" TurnFlags : turnFlags
+
+ActivePokemon --> SpecialCondition : condition
+ActivePokemon "1" *-- "*" AttachedCard : attachedEnergies
+ActivePokemon "1" *-- "0..1" AttachedCard : tool
+
+BenchPokemon "1" *-- "*" AttachedCard : attachedEnergies
+BenchPokemon "1" *-- "0..1" AttachedCard : tool
+
+AttachedCard --> CardType : type
+
+ActionRequest --> ActionType : type
+ActionResult "1" *-- "*" GameEvent : events
+GameEvent --> GameEventType : type
+
+note top of BoardState
+  Objeto central mutable del engine.
+  Serializado como JSONB en GameState (DB).
+  Pasado por referencia a todos los componentes
+  del engine — se muta in-place.
+end note
+
+note right of PlayerField
+  deck y hand guardan cardIds (String).
+  La carta real se resuelve con CardLookup.findById()
+  solo cuando se necesita (lazy lookup).
+end note
+
+note bottom of TurnFlags
+  Reseteados al inicio de cada DRAW phase:
+  activeField.setTurnFlags(TurnFlags.builder().build())
+end note
+
+@enduml

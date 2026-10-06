@@ -1,0 +1,210 @@
+### Bloque A — Demo End-to-End de la API Pokémon TCG
+### ===================================================
+### Requisito: servidor Spring Boot corriendo en localhost:8080
+### Base de datos poblada con cartas (POST /api/cards/sync?set=xy1)
+###
+### Todos los endpoints /api/games/{id}/actions usan body plano (sin payload anidado).
+### El frontend envía cardInstanceId (UUID de la copia concreta) o cardId (ID global pokemontcg.io).
+### La API traduce internamente al ActionRequest que la fachada espera.
+
+### ===================================================
+### A. AUTH
+### ===================================================
+
+### Registrar player 1
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "demo_p1",
+  "email": "demo_p1@test.com",
+  "password": "pass123"
+}
+
+### Registrar player 2
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "demo_p2",
+  "email": "demo_p2@test.com",
+  "password": "pass123"
+}
+
+### Login player 1 → guardar TOKEN1
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo_p1",
+  "password": "pass123"
+}
+
+### Login player 2 → guardar TOKEN2
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo_p2",
+  "password": "pass123"
+}
+
+### ===================================================
+### B. CARDS (público, sin token)
+### ===================================================
+
+### Listar cartas disponibles
+GET http://localhost:8080/api/cards?page=0&size=5
+
+### Buscar cartas por nombre
+GET http://localhost:8080/api/cards?name=Pikachu&page=0&size=10
+
+### Carta específica
+GET http://localhost:8080/api/cards/xy1-1
+
+### ===================================================
+### C. DECKS (requieren token)
+### ===================================================
+### IMPORTANTE: Reemplazar {{TOKEN1}} y {{TOKEN2}}
+### con los tokens obtenidos en los login.
+### Ajustar cardIds según las cartas disponibles en BD.
+
+### Player 1 crea mazo
+POST http://localhost:8080/api/decks
+Content-Type: application/json
+Authorization: Bearer {{TOKEN1}}
+
+{
+  "name": "Mazo Demo 1",
+  "cards": [
+    {"cardId": "xy1-1", "quantity": 4},
+    {"cardId": "base1-1", "quantity": 56}
+  ]
+}
+
+### Player 2 crea mazo
+POST http://localhost:8080/api/decks
+Content-Type: application/json
+Authorization: Bearer {{TOKEN2}}
+
+{
+  "name": "Mazo Demo 2",
+  "cards": [
+    {"cardId": "xy1-1", "quantity": 4},
+    {"cardId": "base1-1", "quantity": 56}
+  ]
+}
+
+### ===================================================
+### D. GAME — FLUJO COMPLETO
+### ===================================================
+### IMPORTANTE: Reemplazar DECK1_ID, DECK2_ID, GAME_ID
+### con los valores obtenidos en respuestas anteriores.
+
+### 1. Player 1 crea partida
+POST http://localhost:8080/api/games
+Content-Type: application/json
+Authorization: Bearer {{TOKEN1}}
+
+{
+  "deckId": {{DECK1_ID}}
+}
+
+### 2. Player 2 se une
+POST http://localhost:8080/api/games/{{GAME_ID}}/join
+Content-Type: application/json
+Authorization: Bearer {{TOKEN2}}
+
+{
+  "deckId": {{DECK2_ID}}
+}
+
+### 3. Player 1 consulta estado
+### activePokemon = null, bench = [] hasta que se juegue PLAY_BASIC_POKEMON
+GET http://localhost:8080/api/games/{{GAME_ID}}/state
+Authorization: Bearer {{TOKEN1}}
+
+### 4. Player 2 consulta estado (handSize, prizeCards ocultos)
+### activePokemon = null también para player2
+GET http://localhost:8080/api/games/{{GAME_ID}}/state
+Authorization: Bearer {{TOKEN2}}
+
+### 5. Player 1 juega PLAY_BASIC_POKEMON (primera acción del juego)
+### Reemplazar cardInstanceId con uno de los devueltos en el state.
+### La API traduce internamente cardInstanceId al ActionRequest que la fachada espera.
+POST http://localhost:8080/api/games/{{GAME_ID}}/actions
+Content-Type: application/json
+Authorization: Bearer {{TOKEN1}}
+
+{
+  "type": "PLAY_BASIC_POKEMON",
+  "cardInstanceId": "p1-xy1-1-a1b2c3d4",
+  "targetPosition": "ACTIVE"
+}
+
+### 6. Player 1 juega END_TURN
+POST http://localhost:8080/api/games/{{GAME_ID}}/actions
+Content-Type: application/json
+Authorization: Bearer {{TOKEN1}}
+
+{
+  "type": "END_TURN"
+}
+
+### 7. Player 2 consulta estado (ahora es su turno)
+GET http://localhost:8080/api/games/{{GAME_ID}}/state
+Authorization: Bearer {{TOKEN2}}
+
+### 8. Player 2 juega USE_ATTACK
+POST http://localhost:8080/api/games/{{GAME_ID}}/actions
+Content-Type: application/json
+Authorization: Bearer {{TOKEN2}}
+
+{
+  "type": "USE_ATTACK",
+  "attackIndex": 0
+}
+
+### 9. Player 2 juega END_TURN
+POST http://localhost:8080/api/games/{{GAME_ID}}/actions
+Content-Type: application/json
+Authorization: Bearer {{TOKEN2}}
+
+{
+  "type": "END_TURN"
+}
+
+### ===================================================
+### E. ERRORES
+### ===================================================
+
+### Fuera de turno (p2 juega cuando es turno de p1)
+POST http://localhost:8080/api/games/{{GAME_ID}}/actions
+Content-Type: application/json
+Authorization: Bearer {{TOKEN2}}
+
+{
+  "type": "END_TURN"
+}
+
+### Acción con error de negocio (fase incorrecta)
+POST http://localhost:8080/api/games/{{GAME_ID}}/actions
+Content-Type: application/json
+Authorization: Bearer {{TOKEN1}}
+
+{
+  "type": "USE_ATTACK",
+  "attackIndex": 0
+}
+
+### Estado de partida a la que no pertenece
+GET http://localhost:8080/api/games/{{GAME_ID}}/state
+Authorization: Bearer {{TOKEN1}}_WRONG
+
+### ===================================================
+### F. WEBSOCKET (para usar en navegador/consola)
+### ===================================================
+### Conexión: new SockJS('http://localhost:8080/ws')
+### Suscribir: /topic/games/{GAME_ID}/events
+### Suscribir: /topic/games/{GAME_ID}/state-changed
+### Enviar: /app/game/ping → recibe en /topic/game/pong
