@@ -1,0 +1,11 @@
+<div class="badge-item" [class.badge-item--locked]="!badge().unlocked" [title]="badge().label">
+  <div class="badge-icon">
+    <span class="badge-emoji">{{ badge().icon }}</span>
+  </div>
+  <span class="badge-label">{{ badge().label }}</span>
+  <div class="badge-tooltip">
+    <strong>{{ badge().label }}</strong>
+    <p>{{ badge().description }}</p>
+    <small>{{ badge().howToUnlock }}</small>
+  </div>
+</div>

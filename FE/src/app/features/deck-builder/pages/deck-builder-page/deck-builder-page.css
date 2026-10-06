@@ -1,0 +1,827 @@
+/* ═══════════════════════════════════════════════════════════════════
+   DECK BUILDER PAGE — Pokedex visual alignment
+   ═══════════════════════════════════════════════════════════════════ */
+
+:host {
+  display: block;
+  height: 100%;
+  min-height: 100vh;
+
+  /* Pokedex-inspired palette (matches /pokedex aesthetic) */
+  --deck-bisel: #1b2838;
+  --deck-titlebar: #1f3a5f;
+  --deck-surface: #1e3348;
+  --deck-panel-bg: #1a2a3e;
+  --deck-text: #f5f7fa;
+  --deck-text-secondary: #a9c0d8;
+  --deck-gold: #d9b35b;
+  --deck-gold-hover: #ffe08a;
+  --deck-gold-active: #f4c542;
+  --deck-border: rgba(255, 255, 255, 0.08);
+  --deck-border-strong: rgba(255, 255, 255, 0.15);
+  --deck-border-focus: rgba(255, 255, 255, 0.25);
+  --deck-danger: #cc5555;
+  --deck-success: #5a9a5a;
+  --deck-success-bright: #7ad385;
+}
+
+/* ── Page layout ──────────────────────────────────────────── */
+.page-container {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow: hidden;
+
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 220, 150, 0.12), transparent 60%),
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+    url('/images/image.webp') center / cover no-repeat fixed;
+}
+
+/* ── Builder header — pokedex screen-titlebar style ──────────── */
+.builder-header {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: var(--deck-titlebar);
+  border-radius: 0.75rem;
+  border: 1px solid var(--deck-border-strong);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+}
+
+.header-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.header-nav .btn-navigation {
+  width: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.7rem;
+}
+
+.header-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.header-kicker {
+  color: var(--deck-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--deck-text);
+  letter-spacing: 0.02em;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Name form ──────────────────────────────────────────── */
+.name-form {
+  margin: 0;
+  min-width: 0;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-field label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--deck-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.form-input {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  color: var(--deck-text);
+  font-size: 0.875rem;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  border-color: var(--deck-gold);
+  box-shadow: 0 0 0 2px rgba(217, 179, 91, 0.2);
+}
+
+.form-input::placeholder {
+  color: var(--deck-text-secondary);
+  opacity: 0.5;
+}
+
+.form-input.ng-invalid.ng-touched {
+  border-color: var(--deck-danger);
+  box-shadow: 0 0 0 2px rgba(204, 85, 85, 0.15);
+}
+
+.field-error {
+  font-size: 0.65rem;
+  color: var(--deck-danger);
+  margin-top: 0.125rem;
+  font-weight: 600;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── HUD Counters ──────────────────────────────────────────── */
+.hud-counters {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  min-width: max-content;
+}
+
+.hud-counter {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.5rem 0.875rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.hud-counter-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--deck-text);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.5rem;
+  text-align: right;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.hud-counter-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--deck-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── HUD counter states ────────────────────────────────────── */
+.hud-counter--empty {
+  border-color: var(--deck-border-strong);
+}
+.hud-counter--empty .hud-counter-value {
+  color: var(--deck-text-secondary);
+}
+
+.hud-counter--success {
+  border-color: var(--deck-success);
+  background: rgba(90, 154, 90, 0.1);
+}
+.hud-counter--success .hud-counter-value {
+  color: var(--deck-success-bright);
+}
+
+.hud-counter--danger {
+  border-color: var(--deck-danger);
+  background: rgba(204, 85, 85, 0.1);
+  animation: hud-pulse-danger 0.8s ease-in-out infinite alternate;
+}
+.hud-counter--danger .hud-counter-value {
+  color: var(--deck-danger);
+}
+
+@keyframes hud-pulse-danger {
+  from { box-shadow: 0 0 0 1px rgba(204, 85, 85, 0.2); }
+  to   { box-shadow: 0 0 0 2px rgba(204, 85, 85, 0.35); }
+}
+
+/* ── Three-column layout ───────────────────────────────────── */
+.deck-builder-layout {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 280px;
+  gap: 0.75rem;
+  align-items: stretch;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  padding-top: 0.75rem;
+}
+
+.builder-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Shared panel styles: modern rounded panels ─────────────── */
+.builder-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.875rem;
+  background: var(--deck-panel-bg);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease;
+}
+
+/* ── Panel loading / empty states ──────────────────────────── */
+.panel--loading {
+  border-color: var(--deck-border-focus);
+}
+.panel--empty {
+  border-color: var(--deck-border);
+}
+
+/* ── Panel header ──────────────────────────────────────────── */
+.panel-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--deck-border);
+}
+
+.panel-header h2 {
+  margin: 0;
+  color: var(--deck-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.panel-header-split {
+  justify-content: space-between;
+}
+
+.panel-header-split > div {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* ── Panel kicker badge ──────────────────────────────────── */
+.panel-kicker {
+  display: inline-grid;
+  min-width: 1.5rem;
+  height: 1.25rem;
+  place-items: center;
+  background: var(--deck-gold);
+  color: #1b2838;
+  border-radius: 0.25rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.panel-badge {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 0.25rem;
+  color: var(--deck-gold);
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Filter panel (left) ────────────────────────────────── */
+.filters-panel {
+  align-self: stretch;
+  overflow: auto;
+}
+
+/* ── Info panel (right) ────────────────────────────────── */
+.info-panel {
+  overflow: auto;
+}
+
+.info-panel .panel-header {
+  margin-bottom: 0;
+}
+
+.info-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+}
+
+.info-panel-content app-deck-summary {
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* ── Card result panel ─────────────────────────────────── */
+.available-cards-panel {
+  flex: 3 1 0;
+  overflow: hidden;
+}
+
+.available-cards-panel app-card-result-list {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Current deck panel ────────────────────────────────── */
+.current-deck-panel {
+  flex: 2 1 0;
+  overflow: hidden;
+}
+
+/* ── Pagination ────────────────────────────────────────────── */
+.catalog-pagination {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.625rem;
+  align-items: center;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--deck-border);
+}
+
+.pagination-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--deck-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pagination-btn {
+  padding: 0.5rem 0.875rem;
+  color: var(--deck-text);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--deck-gold);
+  background: rgba(0, 0, 0, 0.35);
+  transform: translateY(-0.1rem);
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.pagination-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+/* ── Deck content ──────────────────────────────────────────── */
+.deck-content-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Empty deck slots ──────────────────────────────────────── */
+.empty-deck-slots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(80px, 1fr));
+  gap: 0.625rem;
+  min-height: 100%;
+  padding: 0.125rem;
+}
+
+.empty-deck-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 6rem;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px dashed var(--deck-border-strong);
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.empty-deck-slot:hover {
+  border-color: var(--deck-border-focus);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.empty-slot-icon {
+  color: var(--deck-text-secondary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.4;
+}
+
+.empty-slot-label {
+  color: var(--deck-text-secondary);
+  font-size: 0.55rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.4;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Deck count badge ──────────────────────────────────────── */
+.deck-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.2rem 0.625rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 0.25rem;
+  color: var(--deck-success-bright);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Messages ────────────────────────────────────────────── */
+.message {
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.message-icon {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.message-error {
+  background: rgba(204, 85, 85, 0.12);
+  border-color: var(--deck-danger);
+  color: var(--deck-danger);
+}
+
+.message-success {
+  background: rgba(90, 154, 90, 0.1);
+  border-color: var(--deck-success);
+  color: var(--deck-success-bright);
+}
+
+.message-loading {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--deck-border-strong);
+  color: var(--deck-text-secondary);
+}
+
+/* ── Deck validation area ──────────────────────────────────── */
+.deck-validation-area {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--deck-border);
+  padding-top: 0.625rem;
+}
+
+.btn-navigation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--deck-text);
+}
+
+.btn-navigation:hover {
+  border-color: var(--deck-gold);
+  background: rgba(0, 0, 0, 0.32);
+  transform: translateY(-1px);
+}
+
+.btn-navigation:active {
+  transform: translateY(0);
+}
+
+.btn-home {
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--deck-text);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.btn-home:hover {
+  background: rgba(0, 0, 0, 0.32);
+  border-color: var(--deck-gold);
+}
+
+.btn-navigation .back-icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.btn-my-decks {
+  border-color: var(--deck-border-strong);
+  color: var(--deck-text);
+}
+
+/* ── Deck action buttons (bottom of info panel) ──────────── */
+.deck-actions-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--deck-border);
+}
+
+.deck-actions-bottom .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.save-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.deck-rules-help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid rgba(217, 179, 91, 0.55);
+  border-radius: 999px;
+  background: rgba(217, 179, 91, 0.12);
+  color: var(--deck-gold-hover);
+  cursor: help;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.deck-rules-help:hover,
+.deck-rules-help:focus-visible {
+  background: rgba(217, 179, 91, 0.22);
+  border-color: var(--deck-gold-hover);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.deck-rules-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.6rem);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: min(15rem, calc(100vw - 2rem));
+  max-width: calc(280px - 1.75rem);
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(217, 179, 91, 0.45);
+  border-radius: 0.75rem;
+  background: rgba(12, 22, 34, 0.98);
+  color: var(--deck-text);
+  box-shadow: 0 0.6rem 1.5rem rgba(0, 0, 0, 0.45);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.35rem);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.deck-rules-tooltip strong {
+  color: var(--deck-gold-hover);
+  font-size: 0.74rem;
+}
+
+.deck-rules-help:hover .deck-rules-tooltip,
+.deck-rules-help:focus-visible .deck-rules-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.deck-actions-bottom .btn-save {
+  background: var(--deck-success);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f5f7fa;
+  font-size: 0.85rem;
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+
+.deck-actions-bottom .btn-save:hover:not(:disabled) {
+  background: var(--deck-success-bright);
+  transform: translateY(-2px);
+  box-shadow: 0 0.35rem 0.75rem rgba(0, 0, 0, 0.3);
+}
+
+.deck-actions-bottom .btn-save:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.deck-actions-bottom .btn-clear {
+  background: rgba(217, 179, 91, 0.1);
+  border-color: rgba(217, 179, 91, 0.3);
+  color: var(--deck-gold);
+  box-shadow: 0 0.1rem 0.35rem rgba(0, 0, 0, 0.15);
+}
+
+.deck-actions-bottom .btn-clear:hover:not(:disabled) {
+  background: rgba(217, 179, 91, 0.2);
+  border-color: var(--deck-gold);
+  color: var(--deck-gold-hover);
+  transform: translateY(-1px);
+}
+
+.deck-actions-bottom .btn-clear:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.deck-actions-bottom .btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--deck-gold);
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Draft / incomplete clarification ──────────────────────── */
+.draft-clarification {
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--deck-border);
+  border-radius: 0.5rem;
+  color: var(--deck-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── State messages (edit-mode loading / error) ──────────────── */
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.25rem;
+  text-align: center;
+  background: var(--deck-panel-bg);
+  border: 1px solid var(--deck-border-strong);
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.state-loading {
+  color: var(--deck-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.state-error {
+  color: var(--deck-danger);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.state-icon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* ── Responsive: stack on narrow screens ─────────────────── */
+@media (max-width: 1024px) {
+  .builder-header {
+    grid-template-columns: 1fr auto auto;
+    gap: 0.75rem;
+  }
+  .header-nav {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .deck-builder-layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .builder-header {
+    grid-template-columns: 1fr;
+    border-radius: 0.75rem;
+  }
+
+  .hud-counters {
+    justify-content: flex-start;
+  }
+
+  .empty-deck-slots {
+    grid-template-columns: repeat(2, minmax(80px, 1fr));
+  }
+
+  .catalog-pagination {
+    grid-template-columns: 1fr;
+  }
+
+  .page-container {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 0.75rem;
+    overflow: visible;
+  }
+
+  .filters-panel {
+    border-radius: 0.75rem;
+  }
+}

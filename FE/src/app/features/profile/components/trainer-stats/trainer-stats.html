@@ -1,0 +1,26 @@
+<div class="panel glass">
+  <div class="panel-title">ESTADÍSTICAS DEL ENTRENADOR</div>
+  <div class="stats-grid">
+    <div class="stat-block">
+      <span class="stat-icon">🏆</span>
+      <div class="stat-body">
+        <span class="stat-number">VICTORIAS</span>
+        <span class="stat-value">{{ stats().wins }}</span>
+      </div>
+    </div>
+    <div class="stat-block">
+      <span class="stat-icon">⚔️</span>
+      <div class="stat-body">
+        <span class="stat-number">DERROTAS</span>
+        <span class="stat-value">{{ stats().losses }}</span>
+      </div>
+    </div>
+    <div class="stat-block">
+      <span class="stat-icon">🔥</span>
+      <div class="stat-body">
+        <span class="stat-number">RACHA</span>
+        <span class="stat-value">{{ stats().streak }}</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+<div class="avatar-wrapper">
+  <div class="ambient-glow"></div>
+
+  <div class="avatar-nav">
+    <button class="nav-arrow" type="button" (click)="prev.emit()" [disabled]="skinIndex() === 0" title="Anterior">
+      ◀
+    </button>
+  </div>
+
+  <div class="avatar-stage">
+    <canvas #spriteCanvas class="sprite-canvas" width="128" height="192"></canvas>
+    <canvas #shadowCanvas class="shadow-canvas" width="96" height="24"></canvas>
+    <div class="pedestal"></div>
+  </div>
+
+  <div class="avatar-nav">
+    <button class="nav-arrow" type="button" (click)="next.emit()" [disabled]="skinIndex() >= totalSkins() - 1" title="Siguiente">
+      ▶
+    </button>
+  </div>
+
+
+</div>

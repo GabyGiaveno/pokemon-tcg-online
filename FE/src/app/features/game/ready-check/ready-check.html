@@ -1,0 +1,32 @@
+<div class="ready-check">
+  <div class="ready-check__panel">
+    @switch (stage()) {
+      @case ('press-ready') {
+        <h2 class="ready-check__title">¿Listo para empezar?</h2>
+        <p class="ready-check__desc">Cuando ambos estén listos se lanzará la Poké Ball para decidir quién empieza.</p>
+        <button type="button" class="ready-check__btn ready-check__btn--ready" (click)="ready.emit()">¡Listo!</button>
+        <p class="ready-check__hint">
+          {{ opponentReady() ? 'El rival ya está listo, te espera.' : 'El rival todavía no está listo.' }}
+        </p>
+      }
+      @case ('waiting-opponent') {
+        <h2 class="ready-check__title">Esperando al rival…</h2>
+        <p class="ready-check__desc">Ya estás listo. Falta que el rival confirme para lanzar la Poké Ball.</p>
+        <div class="ready-check__spinner" aria-hidden="true"></div>
+      }
+      @case ('choose') {
+        <h2 class="ready-check__title">¡Ganaste el lanzamiento! 🎉</h2>
+        <p class="ready-check__desc">Elegí quién toma el primer turno.</p>
+        <div class="ready-check__choices">
+          <button type="button" class="ready-check__btn ready-check__btn--me" (click)="choose.emit('ME')">Empiezo yo</button>
+          <button type="button" class="ready-check__btn ready-check__btn--opp" (click)="choose.emit('OPPONENT')">Empieza el rival</button>
+        </div>
+      }
+      @case ('waiting-choice') {
+        <h2 class="ready-check__title">El rival ganó el lanzamiento</h2>
+        <p class="ready-check__desc">Está decidiendo quién toma el primer turno…</p>
+        <div class="ready-check__spinner" aria-hidden="true"></div>
+      }
+    }
+  </div>
+</div>

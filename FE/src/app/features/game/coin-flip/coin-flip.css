@@ -1,0 +1,124 @@
+.coin-flip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.pokeball {
+  width: clamp(80px, 12vw, 130px);
+  aspect-ratio: 1;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: pokeball-spin-heads 1.4s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+.pokeball--tails {
+  animation-name: pokeball-spin-tails;
+}
+
+.pokeball__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  backface-visibility: hidden;
+  background: #f0f0f0; /* lower (white) half */
+  border: 4px solid #1a1a1a;
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.pokeball__face--tails {
+  transform: rotateY(180deg);
+  background: #252a32;
+}
+
+/* Upper red half */
+.pokeball__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff5b5b, #ee1515);
+}
+
+.pokeball__face--tails .pokeball__top {
+  background: radial-gradient(circle at 35% 35%, #6f7f95, #273244 68%);
+}
+
+.pokeball__face--tails .pokeball__band {
+  background: #d9b35b;
+}
+
+.pokeball__face--tails .pokeball__button {
+  background: radial-gradient(circle at 35% 35%, #ffe08a, #b9882d);
+  border-color: #1a1a1a;
+}
+
+/* Black equator band */
+.pokeball__band {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 12%;
+  transform: translateY(-50%);
+  background: #1a1a1a;
+}
+
+/* Center button */
+.pokeball__button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid #1a1a1a;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Lands on heads: 5 full turns (front face). */
+@keyframes pokeball-spin-heads {
+  0%   { transform: translateY(0) rotateY(0); }
+  50%  { transform: translateY(-44px) rotateY(900deg); }
+  100% { transform: translateY(0) rotateY(1800deg); }
+}
+
+/* Lands on tails: 5.5 turns (back face). */
+@keyframes pokeball-spin-tails {
+  0%   { transform: translateY(0) rotateY(0); }
+  50%  { transform: translateY(-44px) rotateY(990deg); }
+  100% { transform: translateY(0) rotateY(1980deg); }
+}
+
+.coin-flip__result {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(1rem, 3vw, 1.8rem);
+  color: #f5e6c8;
+  text-shadow: 0 0 8px #000;
+  animation: coin-label-in 0.3s ease-out 1.1s both;
+}
+
+.coin-flip__caption {
+  margin: 0;
+  font-size: clamp(0.8rem, 2vw, 1.05rem);
+  color: var(--gb-gold, #f0d060);
+  text-shadow: 0 0 6px #000;
+  animation: coin-label-in 0.3s ease-out 1.25s both;
+}
+
+@keyframes coin-label-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pokeball { animation-duration: 1ms; }
+  .coin-flip__result,
+  .coin-flip__caption { animation-delay: 0ms; }
+}

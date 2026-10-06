@@ -1,0 +1,158 @@
+<aside class="detail-panel" aria-label="Detalle de la carta seleccionada">
+  @if (loading()) {
+    <div class="skeleton-detail" aria-hidden="true">
+      <div class="skeleton-image"></div>
+      <div class="skeleton-line w-70"></div>
+      <div class="skeleton-line w-50"></div>
+      <div class="skeleton-line w-90"></div>
+      <div class="skeleton-line w-90"></div>
+    </div>
+  } @else if (card(); as c) {
+    <div class="detail-content">
+      <div class="image-wrap">
+        <button
+          type="button"
+          class="image-expand-button"
+          (click)="openFullscreen()"
+          [attr.aria-label]="'Ver ' + c.name + ' en pantalla completa'"
+        >
+          <img
+            class="card-image-large"
+            [src]="c.imageUrlLarge"
+            [alt]="'Carta ' + c.name + ' ampliada'"
+            loading="lazy"
+            (error)="onImgError($event)"
+          />
+          <div class="image-fallback" aria-hidden="true">{{ c.name }}</div>
+        </button>
+      </div>
+
+      <h2 class="card-title">{{ c.name }}</h2>
+
+      <dl class="info-list">
+        @if (c.hp) {
+          <div class="info-row">
+            <dt>HP</dt>
+            <dd>{{ c.hp }}</dd>
+          </div>
+        }
+        @if (c.types.length > 0) {
+          <div class="info-row">
+            <dt>Tipo</dt>
+            <dd class="type-chips">
+              @for (t of c.types; track t) {
+                <span class="type-chip" [style.--chip-color]="getTypeColor(t)">{{ t }}</span>
+              }
+            </dd>
+          </div>
+        }
+        @if (c.evolvesFrom) {
+          <div class="info-row">
+            <dt>Evoluciona de</dt>
+            <dd>{{ c.evolvesFrom }}</dd>
+          </div>
+        }
+        <div class="info-row">
+          <dt>Expansión</dt>
+          <dd>{{ c.cardSetName }}</dd>
+        </div>
+      </dl>
+
+      @if (c.attacks && c.attacks.length > 0) {
+        <section class="detail-section">
+          <h3>Ataques</h3>
+          <ul class="attack-list">
+            @for (atk of c.attacks; track atk.name) {
+              <li class="attack-item">
+                <div class="attack-header">
+                  <span class="attack-name">{{ atk.name }}</span>
+                  @if (atk.damage) {
+                    <span class="attack-damage">{{ atk.damage }}</span>
+                  }
+                </div>
+                @if (atk.cost.length > 0) {
+                  <div class="attack-cost">
+                    @for (c2 of atk.cost; track $index) {
+                      <span class="energy-pip" [style.--chip-color]="getTypeColor(c2)" [title]="c2"></span>
+                    }
+                  </div>
+                }
+                @if (atk.text) {
+                  <p class="attack-text">{{ atk.text }}</p>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if ((c.weaknesses && c.weaknesses.length > 0) || (c.resistances && c.resistances.length > 0)) {
+        <section class="detail-section">
+          <h3>Debilidad / Resistencia</h3>
+          <div class="wr-row">
+            @if (c.weaknesses) {
+              @for (w of c.weaknesses; track w.type) {
+                <span class="wr-chip" [style.--chip-color]="getTypeColor(w.type)">
+                  Debilidad: {{ w.type }} {{ w.value }}
+                </span>
+              }
+            }
+            @if (c.resistances) {
+              @for (r of c.resistances; track r.type) {
+                <span class="wr-chip" [style.--chip-color]="getTypeColor(r.type)">
+                  Resistencia: {{ r.type }} {{ r.value }}
+                </span>
+              }
+            }
+          </div>
+        </section>
+      }
+
+      @if (c.retreatCost.length > 0) {
+        <section class="detail-section">
+          <h3>Costo de retirada</h3>
+          <div class="attack-cost">
+            @for (cost of c.retreatCost; track $index) {
+              <span class="energy-pip" [style.--chip-color]="getTypeColor(cost)" [title]="cost"></span>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  } @else {
+    <div class="empty-detail">
+      <div class="empty-icon" aria-hidden="true">🃏</div>
+      <p>Seleccioná una carta para ver su detalle</p>
+    </div>
+  }
+
+  @if (fullscreenOpen()) {
+    @if (card(); as c) {
+      <div
+        class="card-fullscreen-backdrop"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Vista ampliada de ' + c.name"
+        (click)="closeFullscreen()"
+      >
+        <button
+          type="button"
+          class="fullscreen-close"
+          aria-label="Cerrar vista ampliada"
+          (click)="closeFullscreen(); $event.stopPropagation()"
+        >
+          &times;
+        </button>
+        <div class="fullscreen-stage" (click)="$event.stopPropagation()">
+          <app-pokemon-holo-card
+            [imageUrl]="c.imageUrlLarge"
+            [name]="c.name"
+            [finish]="getFinish(c)"
+            [tiltOptions]="fullscreenTiltOptions"
+          />
+          <p class="fullscreen-hint">Mové el mouse sobre la carta</p>
+        </div>
+      </div>
+    }
+  }
+</aside>

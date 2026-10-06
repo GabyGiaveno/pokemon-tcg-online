@@ -1,0 +1,24 @@
+.feedback {
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+}
+
+.feedback.error {
+  background: rgba(255, 77, 109, 0.12);
+  border-color: rgba(255, 77, 109, 0.35);
+  color: #ffb6c3;
+}
+
+.feedback.success {
+  background: rgba(43, 215, 120, 0.12);
+  border-color: rgba(43, 215, 120, 0.35);
+  color: #b7ffd2;
+}
+
+.feedback.info {
+  background: rgba(90, 140, 255, 0.12);
+  border-color: rgba(90, 140, 255, 0.35);
+  color: #d0ddff;
+}

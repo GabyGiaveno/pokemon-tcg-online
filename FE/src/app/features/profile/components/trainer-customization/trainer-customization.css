@@ -1,0 +1,140 @@
+:host {
+  display: contents;
+}
+
+.panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.glass {
+  background: rgba(7, 24, 45, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #DE940E;
+  margin-bottom: 2px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: inherit;
+}
+
+.tab-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn--active {
+  background: rgba(16, 81, 137, 0.5);
+  color: #fff;
+}
+
+/* Items grid */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: inherit;
+  color: #fff;
+  position: relative;
+}
+
+.item-card:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-2px);
+}
+
+.item-card--selected {
+  border-color: #DE940E;
+  background: rgba(222, 148, 14, 0.1);
+  box-shadow: 0 0 16px rgba(222, 148, 14, 0.2);
+}
+
+.item-card--locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.item-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 20px;
+}
+
+.item-card--selected .item-preview {
+  background: rgba(222, 148, 14, 0.15);
+}
+
+.item-icon {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.1));
+}
+
+.item-name {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.item-lock {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 12px;
+}
+
+@media (max-width: 500px) {
+  .items-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

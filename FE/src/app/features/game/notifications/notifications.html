@@ -1,0 +1,9 @@
+@if (notifications().length > 0) {
+  <div class="notifications-overlay">
+    @for (notification of notifications(); track notification.id) {
+      <div class="notification-toast">
+        <span class="notification-text">{{ notification.message }}</span>
+      </div>
+    }
+  </div>
+}

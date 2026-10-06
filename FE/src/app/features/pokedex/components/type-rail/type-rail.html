@@ -1,0 +1,17 @@
+<nav class="type-rail" aria-label="Filtrar por tipo de Pokémon">
+  @for (type of types; track type.id) {
+    <button
+      type="button"
+      class="type-icon"
+      appHoverSound
+      [class.active]="activeType() === type.id"
+      [style.--type-color]="type.color"
+      [attr.aria-pressed]="activeType() === type.id"
+      [attr.aria-label]="type.label"
+      [title]="type.label"
+      (click)="onTypeClick(type.id)"
+    >
+      <span aria-hidden="true">{{ type.icon }}</span>
+    </button>
+  }
+</nav>

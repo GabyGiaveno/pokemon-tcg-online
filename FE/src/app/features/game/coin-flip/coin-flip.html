@@ -1,0 +1,18 @@
+<div class="coin-flip" aria-hidden="true">
+  <div class="pokeball" [class.pokeball--tails]="result() === 'TAILS'">
+    <div class="pokeball__face pokeball__face--heads">
+      <span class="pokeball__top"></span>
+      <span class="pokeball__band"></span>
+      <span class="pokeball__button"></span>
+    </div>
+    <div class="pokeball__face pokeball__face--tails">
+      <span class="pokeball__top"></span>
+      <span class="pokeball__band"></span>
+      <span class="pokeball__button"></span>
+    </div>
+  </div>
+  <p class="coin-flip__result">{{ result() === 'HEADS' ? '¡Cara!' : '¡Cruz!' }}</p>
+  @if (caption()) {
+    <p class="coin-flip__caption">{{ caption() }}</p>
+  }
+</div>

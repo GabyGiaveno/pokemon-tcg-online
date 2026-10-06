@@ -1,0 +1,5 @@
+@if (feedback(); as message) {
+  <div class="feedback" [class.error]="message.type === 'error'" [class.success]="message.type === 'success'" [class.info]="message.type === 'info'">
+    {{ message.message }}
+  </div>
+}

@@ -1,0 +1,217 @@
+/* ═══════════════════════════════════════════════════════════════════
+   DECK VALIDATION PANEL — Pokedex validation
+   ═══════════════════════════════════════════════════════════════════ */
+
+.validation-panel {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.validation-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--deck-gold, #d9b35b);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Card count with progress bar ──────────────────────────── */
+.validation-count {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0.625rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.count-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--deck-border, rgba(255, 255, 255, 0.08));
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.count-bar-fill {
+  height: 100%;
+  background: var(--deck-success-bright, #7ad385);
+  transition: width 0.3s ease;
+  border-radius: 999px;
+}
+
+/* ── Count text ──────────────────────────────────────────── */
+.count-text {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.count-current {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--deck-text, #f5f7fa);
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.count-separator {
+  font-size: 1rem;
+  color: var(--deck-text-secondary, #a9c0d8);
+  line-height: 1;
+}
+
+.count-max {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--deck-text-secondary, #a9c0d8);
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.count-label {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--deck-gold, #d9b35b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Count visual states ────────────────────────────────── */
+.count--empty {
+  border-color: var(--deck-border, rgba(255, 255, 255, 0.08));
+}
+.count--empty .count-current {
+  color: var(--deck-text-secondary, #a9c0d8);
+}
+.count--empty .count-bar-fill {
+  background: var(--deck-border, rgba(255, 255, 255, 0.08));
+}
+
+.count--valid {
+  border-color: var(--deck-success, #5a9a5a);
+}
+.count--valid .count-current {
+  color: var(--deck-success-bright, #7ad385);
+}
+
+.count--over {
+  border-color: var(--deck-danger, #cc5555);
+  box-shadow: 0 0 0 1px rgba(204, 85, 85, 0.2);
+}
+.count--over .count-current {
+  color: var(--deck-danger, #cc5555);
+}
+.count--over .count-bar-fill {
+  background: var(--deck-danger, #cc5555);
+}
+
+.count--exact .count-bar-fill {
+  background: var(--deck-success-bright, #7ad385);
+  box-shadow: 0 0 6px rgba(122, 211, 133, 0.4);
+}
+.count--exact {
+  border-color: var(--deck-success, #5a9a5a);
+  box-shadow: 0 0 0 1px rgba(122, 211, 133, 0.25);
+}
+
+/* ── Validation status ─────────────────────────────────── */
+.validation-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.status-icon {
+  font-size: 0.875rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.status-pending {
+  background: rgba(0, 0, 0, 0.15);
+  border-color: var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+  color: var(--deck-text-secondary, #a9c0d8);
+}
+
+.status-valid {
+  background: rgba(90, 154, 90, 0.1);
+  border-color: var(--deck-success, #5a9a5a);
+  color: var(--deck-success-bright, #7ad385);
+}
+
+.status-invalid {
+  background: rgba(204, 85, 85, 0.1);
+  border-color: var(--deck-danger, #cc5555);
+  color: var(--deck-danger, #cc5555);
+}
+
+.status-detail {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.8;
+  margin-left: auto;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Error list ──────────────────────────────────────────────── */
+.validation-errors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.validation-error-item {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 0.7rem;
+  padding: 0.5rem 0.625rem;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 0.4rem;
+}
+
+.error-code {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--deck-danger, #cc5555);
+  background: rgba(204, 85, 85, 0.15);
+  padding: 2px 6px;
+  border: 1px solid rgba(204, 85, 85, 0.3);
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.error-message {
+  color: var(--deck-text, #f5f7fa);
+  flex: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.error-card-id {
+  font-size: 0.6rem;
+  color: var(--deck-text-secondary, #a9c0d8);
+  flex-shrink: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

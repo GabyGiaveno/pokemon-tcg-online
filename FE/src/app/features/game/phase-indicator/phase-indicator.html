@@ -1,0 +1,7 @@
+<div class="phase-indicator" [class.phase-indicator--my-turn]="isMyTurn()">
+  <span class="phase-indicator__turn">{{ turnLabel() }}</span>
+  <span class="phase-indicator__divider">·</span>
+  <span class="phase-indicator__phase">{{ phaseLabel() }}</span>
+  <span class="phase-indicator__divider">·</span>
+  <span class="phase-indicator__turn-number">Turno {{ turnNumber() }}</span>
+</div>

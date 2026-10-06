@@ -1,0 +1,38 @@
+<nav class="pagination" aria-label="Card pagination">
+  <span class="range-label">{{ rangeLabel() }}</span>
+
+  <div class="pages">
+    <button
+      type="button"
+      class="page-btn nav-btn"
+      appHoverSound
+      [disabled]="page() === 0"
+      (click)="goTo(page() - 1)"
+    >
+      ‹ Anterior
+    </button>
+
+    @for (p of visiblePages(); track p) {
+      <button
+        type="button"
+        class="page-btn"
+        appHoverSound
+        [class.active]="p === page()"
+        [attr.aria-current]="p === page() ? 'page' : null"
+        (click)="goTo(p)"
+      >
+        {{ p + 1 }}
+      </button>
+    }
+
+    <button
+      type="button"
+      class="page-btn nav-btn"
+      appHoverSound
+      [disabled]="page() >= totalPages() - 1"
+      (click)="goTo(page() + 1)"
+    >
+      Siguiente ›
+    </button>
+  </div>
+</nav>

@@ -1,0 +1,150 @@
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--pokedex-filterbar);
+  border-top: 1px solid rgba(0, 0, 0, 0.3);
+  min-width: 0;
+}
+
+.filter-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1 1 10rem;
+  min-width: 0;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-icon {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.search-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--pokedex-text);
+  font-size: 0.85rem;
+}
+
+.search-field input::placeholder {
+  color: var(--pokedex-text-secondary);
+}
+
+.set-field select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--pokedex-gold);
+  color: var(--pokedex-text);
+  font-size: 0.8rem;
+  max-width: 12rem;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.set-field select:hover,
+.set-field select:focus {
+  border-color: var(--pokedex-gold-hover);
+  background: rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+
+.set-field select option {
+  background: var(--pokedex-bisel);
+  color: var(--pokedex-text);
+}
+
+.supertype-group {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.supertype-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pokedex-text);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.supertype-chip:hover {
+  border-color: var(--pokedex-gold);
+}
+
+.supertype-chip.active {
+  background: var(--pokedex-gold-active);
+  color: #1b2838;
+  border-color: var(--pokedex-gold-active);
+}
+
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chip {
+  --chip-color: var(--pokedex-gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1b2838;
+  background: var(--chip-color);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.clear-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pokedex-text-secondary);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  border-color: var(--pokedex-gold);
+  color: var(--pokedex-text);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

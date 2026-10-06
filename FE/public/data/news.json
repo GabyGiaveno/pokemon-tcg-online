@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "title": "Nueva temporada competitiva",
+    "description": "Preparate para la Temporada 2 con nuevas reglas, recompensas exclusivas y un sistema de ranking renovado.",
+    "date": "2026-06-25",
+    "category": "evento"
+  },
+  {
+    "id": 2,
+    "title": "Actualización de cartas",
+    "description": "Se agregaron 15 nuevas cartas al pool disponible. ¡Revisá la Pokédex para descubrirlas!",
+    "date": "2026-06-20",
+    "category": "update"
+  },
+  {
+    "id": 3,
+    "title": "Corrección de errores",
+    "description": "Se corrigieron problemas de conexión en partidas y se mejoró la estabilidad general del juego.",
+    "date": "2026-06-18",
+    "category": "parche"
+  },
+  {
+    "id": 4,
+    "title": "Nuevo constructor de mazos",
+    "description": "Rediseñamos el constructor de mazos con vista previa de cartas, validación en tiempo real y más.",
+    "date": "2026-06-12",
+    "category": "update"
+  },
+  {
+    "id": 5,
+    "title": "Torneo relámpago este fin de semana",
+    "description": "Participá del primer torneo relámpago. Inscripción abierta hasta el viernes. ¡Hay premios!",
+    "date": "2026-06-10",
+    "category": "evento"
+  }
+]

@@ -1,0 +1,45 @@
+<div class="action-panel" [class.open]="open()">
+  <div class="action-buttons">
+    <button
+      class="action-btn action-btn--attack"
+      [disabled]="!actions()?.attack?.enabled"
+      [title]="actions()?.attack?.reason ?? ''"
+      (click)="execute.emit('attack')"
+    ><span class="action-icon">⚔</span><span>Attack</span></button>
+    <button
+      class="action-btn action-btn--retreat"
+      [disabled]="!actions()?.retreat?.enabled"
+      [title]="actions()?.retreat?.reason ?? ''"
+      (click)="execute.emit('retreat')"
+    ><span class="action-icon">↩</span><span>Retreat</span></button>
+    <button
+      class="action-btn action-btn--energy"
+      [disabled]="!actions()?.playEnergy?.enabled"
+      [title]="actions()?.playEnergy?.reason ?? ''"
+      (click)="execute.emit('playEnergy')"
+    ><span class="action-icon">⚡</span><span>Play Energy</span></button>
+    <button
+      class="action-btn action-btn--trainer"
+      [disabled]="!actions()?.playTrainer?.enabled"
+      [title]="actions()?.playTrainer?.reason ?? ''"
+      (click)="execute.emit('playTrainer')"
+    ><span class="action-icon">▣</span><span>Play Trainer</span></button>
+    <button
+      class="action-btn action-btn--evolve"
+      [disabled]="!actions()?.evolve?.enabled"
+      [title]="actions()?.evolve?.reason ?? ''"
+      (click)="execute.emit('evolve')"
+    ><span class="action-icon">▲</span><span>Evolve</span></button>
+    <button
+      class="action-btn action-btn--end"
+      [disabled]="!actions()?.endTurn?.enabled"
+      [title]="actions()?.endTurn?.reason ?? ''"
+      (click)="execute.emit('endTurn')"
+    ><span class="action-icon">⏻</span><span>End Turn</span></button>
+    <button
+      class="action-btn action-btn--concede"
+      title="Concede the game"
+      (click)="execute.emit('concede')"
+    ><span class="action-icon">🏳</span><span>Concede</span></button>
+  </div>
+</div>

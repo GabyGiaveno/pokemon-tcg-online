@@ -1,0 +1,151 @@
+<div
+  class="card-inspect-backdrop"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="'Inspeccionar ' + card().name"
+  (click)="handleClose()"
+>
+  <div class="card-inspect-panel" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      class="card-inspect-close"
+      aria-label="Cerrar"
+      (click)="handleClose()"
+    >
+      &times;
+    </button>
+
+    <div class="card-inspect-shell" [appVanillaTilt]="{ max: 12, scale: 1.03 }" appCardGlow>
+      @if (hasArt()) {
+        <img
+          class="card-inspect-image"
+          [src]="artUrl()"
+          [alt]="card().name"
+        />
+      } @else {
+        <div class="image-fallback image-fallback--visible" aria-hidden="true">{{ card().name }}</div>
+      }
+
+      <h2 class="card-inspect-name">{{ card().name }}</h2>
+    </div>
+
+    @if (detail(); as d) {
+      <div class="card-inspect-detail">
+        <dl class="card-inspect-info">
+          @if (d.hp) {
+            <div class="card-inspect-info__row"><dt>PS</dt><dd>{{ d.hp }}</dd></div>
+          }
+          @if (d.types.length > 0) {
+            <div class="card-inspect-info__row">
+              <dt>Tipo</dt>
+              <dd class="card-inspect-chips">
+                @for (t of d.types; track t) {
+                  <span class="card-inspect-chip" [style.--chip]="typeColor(t)">{{ typeIcon(t) }} {{ typeNameEs(t) }}</span>
+                }
+              </dd>
+            </div>
+          }
+          @if (categoryLabel()) {
+            <div class="card-inspect-info__row"><dt>Categoría</dt><dd>{{ categoryLabel() }}</dd></div>
+          }
+          @if (d.evolvesFrom) {
+            <div class="card-inspect-info__row"><dt>Evoluciona de</dt><dd>{{ d.evolvesFrom }}</dd></div>
+          }
+          @if (d.setName) {
+            <div class="card-inspect-info__row"><dt>Expansión</dt><dd>{{ d.setName }}</dd></div>
+          }
+        </dl>
+
+        @if (attackOptions().length > 0) {
+          <section class="card-inspect-section">
+            <h3 class="card-inspect-section__title">Ataques</h3>
+            <ul class="card-inspect-attacks">
+              @for (atk of attackOptions(); track atk.index) {
+                <li>
+                  @if (mode() === 'inspect-attack') {
+                    <button
+                      type="button"
+                      class="card-inspect-attack card-inspect-attack--clickable"
+                      [class.card-inspect-attack--selected]="selectedAttackIndex() === atk.index"
+                      [class.card-inspect-attack--disabled]="!atk.affordable"
+                      [disabled]="!atk.affordable"
+                      (click)="handleAttackClick(atk)"
+                    >
+                      <span class="card-inspect-attack__head">
+                        <span class="card-inspect-attack__cost">
+                          @for (type of atk.cost; track $index) {
+                            <span class="card-inspect-pip" [style.--chip]="typeColor(type)" [title]="typeNameEs(type)"></span>
+                          }
+                        </span>
+                        <span class="card-inspect-attack__name">{{ atk.name }}</span>
+                        @if (atk.damage > 0) {
+                          <span class="card-inspect-attack__damage">{{ atk.damage }}</span>
+                        }
+                      </span>
+                      @if (atk.text) {
+                        <span class="card-inspect-attack__text">{{ atk.text }}</span>
+                      }
+                      @if (!atk.affordable) {
+                        <span class="card-inspect-attack__hint">sin energía suficiente</span>
+                      }
+                    </button>
+                  } @else {
+                    <div class="card-inspect-attack">
+                      <span class="card-inspect-attack__head">
+                        <span class="card-inspect-attack__cost">
+                          @for (type of atk.cost; track $index) {
+                            <span class="card-inspect-pip" [style.--chip]="typeColor(type)" [title]="typeNameEs(type)"></span>
+                          }
+                        </span>
+                        <span class="card-inspect-attack__name">{{ atk.name }}</span>
+                        @if (atk.damage > 0) {
+                          <span class="card-inspect-attack__damage">{{ atk.damage }}</span>
+                        }
+                      </span>
+                      @if (atk.text) {
+                        <span class="card-inspect-attack__text">{{ atk.text }}</span>
+                      }
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (d.weaknesses.length > 0 || d.resistances.length > 0) {
+          <section class="card-inspect-section">
+            <h3 class="card-inspect-section__title">Debilidad / Resistencia</h3>
+            <div class="card-inspect-chips">
+              @for (w of d.weaknesses; track w.type) {
+                <span class="card-inspect-wr" [style.--chip]="typeColor(w.type)">Debilidad: {{ typeNameEs(w.type) }} {{ w.value }}</span>
+              }
+              @for (r of d.resistances; track r.type) {
+                <span class="card-inspect-wr" [style.--chip]="typeColor(r.type)">Resistencia: {{ typeNameEs(r.type) }} {{ r.value }}</span>
+              }
+            </div>
+          </section>
+        }
+
+        @if (d.retreatCost.length > 0) {
+          <section class="card-inspect-section">
+            <h3 class="card-inspect-section__title">Costo de retirada</h3>
+            <div class="card-inspect-cost">
+              @for (cost of d.retreatCost; track $index) {
+                <span class="card-inspect-pip" [style.--chip]="typeColor(cost)" [title]="typeNameEs(cost)"></span>
+              }
+            </div>
+          </section>
+        }
+
+        @if (canRetreat()) {
+          <button type="button" class="card-inspect-retreat" (click)="handleRetreat()">
+            ↩ Retirar Pokémon
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="card-inspect-detail card-inspect-detail--loading">Cargando detalles…</div>
+    }
+  </div>
+</div>

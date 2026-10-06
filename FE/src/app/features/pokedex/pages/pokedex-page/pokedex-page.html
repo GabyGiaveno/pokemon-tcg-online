@@ -1,0 +1,51 @@
+<div class="library-scene">
+  <div class="pokedex-screen">
+    <header class="screen-titlebar">
+      <h1>Pokédex de Cartas</h1>
+      <div class="titlebar-actions">
+        <a class="back-to-lobby" routerLink="/lobby" appHoverSound title="Volver al lobby" aria-label="Volver al lobby">
+          <span class="back-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 11.5 12 4l9 7.5" />
+              <path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" />
+              <path d="M9 20v-6h6v6" />
+            </svg>
+          </span>
+          <span class="back-label">Volver al lobby</span>
+        </a>
+        <app-settings-menu />
+      </div>
+    </header>
+
+    <div class="screen-content">
+      <app-type-rail
+        [activeType]="filters().type"
+        (typeToggle)="onTypeToggle($event)"
+      />
+
+      <app-card-grid
+        [cards]="cardsResource.value().cards"
+        [selectedId]="selectedCard()?.id ?? null"
+        [loading]="cardsResource.isLoading()"
+        [error]="error()"
+        [page]="page()"
+        [size]="pageSize"
+        [total]="cardsResource.value().total"
+        (cardSelect)="onCardSelect($event)"
+        (pageChange)="onPageChange($event)"
+        (retry)="onRetry()"
+      />
+
+      <app-card-detail-panel [card]="selectedCard()" [loading]="cardsResource.isLoading()" />
+    </div>
+
+    <app-filter-bar
+      [filters]="filters()"
+      (searchChange)="onSearchChange($event)"
+      (setChange)="onSetChange($event)"
+      (supertypeToggle)="onSupertypeToggle($event)"
+      (clearFilters)="onClearFilters()"
+      (removeChip)="onRemoveChip($event)"
+    />
+  </div>
+</div>

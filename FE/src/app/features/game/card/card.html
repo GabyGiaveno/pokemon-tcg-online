@@ -1,0 +1,72 @@
+@if (card() || cardId()) {
+  @if (faceDown()) {
+    <div
+      class="card app-card app-card--{{ size() }} app-card--face-down"
+      [class.app-card--selected]="selected()"
+      (click)="handleClick()"
+    >
+      <div class="app-card__back" aria-hidden="true">
+        <span class="app-card__back-emblem"></span>
+      </div>
+    </div>
+  } @else {
+    <div
+      class="card app-card app-card--{{ size() }}"
+      [class.app-card--selected]="selected()"
+      [class.app-card--playable]="playable()"
+      [class.app-card--alert]="alert()"
+      appCardGlow
+      [appVanillaTilt]="{ max: 10, scale: 1.04 }"
+      (click)="handleClick()"
+    >
+      @if (hasArt()) {
+        <img
+          class="app-card__img"
+          [class.image-broken]="imageBroken()"
+          [src]="artUrl()"
+          [alt]="displayName()"
+          loading="lazy"
+          (error)="onImgError()"
+        />
+      }
+
+      @if (!hasArt() || imageBroken()) {
+        <div class="app-card__fallback" aria-hidden="true">
+          <span class="app-card__fallback-name">{{ displayName() || cardId() }}</span>
+        </div>
+      }
+
+      @if (energyCount() > 0) {
+        <span class="app-card__energy" title="Energías atachadas">⚡{{ energyCount() }}</span>
+      }
+
+      @if (showHp()) {
+        <div class="app-card__hpbar" [title]="hp() + ' / ' + maxHp() + ' HP'">
+          <div
+            class="app-card__hpbar-fill"
+            [class.app-card__hpbar-fill--mid]="hpPct() < 60 && hpPct() >= 30"
+            [class.app-card__hpbar-fill--low]="hpPct() < 30"
+            [style.width.%]="hpPct()"
+          ></div>
+          <span class="app-card__hpbar-text">{{ hp() }}/{{ maxHp() }}</span>
+        </div>
+      }
+
+      @if (displayName()) {
+        <div class="app-card__name-strip">{{ displayName() }}</div>
+      }
+
+      @if (conditions().length > 0) {
+        <div class="app-card__conditions">
+          @for (condition of conditions(); track condition) {
+            <span class="app-card__condition app-card__condition--{{ condition.toLowerCase() }}">{{ condition }}</span>
+          }
+        </div>
+      }
+    </div>
+  }
+} @else {
+  <div class="app-card app-card--{{ size() }} app-card--empty" aria-hidden="true">
+    <span class="app-card__empty-icon"></span>
+  </div>
+}

@@ -1,0 +1,8 @@
+<div class="panel glass">
+  <div class="panel-title">INSIGNIAS</div>
+  <div class="badges-grid">
+    @for (badge of badges(); track badge.id) {
+      <app-badge-item [badge]="badge" />
+    }
+  </div>
+</div>

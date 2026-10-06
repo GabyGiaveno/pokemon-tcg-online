@@ -1,0 +1,53 @@
+<div class="validation-panel">
+  <h3 class="validation-title">Validación</h3>
+
+  <!-- Card count indicator -->
+  <div class="validation-count"
+       [class.count--empty]="totalCards() === 0"
+       [class.count--valid]="totalCards() >= 1 && totalCards() <= 60"
+       [class.count--over]="totalCards() > 60"
+       [class.count--exact]="totalCards() === 60">
+    <div class="count-bar">
+      <div class="count-bar-fill" [style.width.%]="countPercent()"></div>
+    </div>
+    <div class="count-text">
+      <span class="count-current">{{ totalCards() }}</span>
+      <span class="count-separator">/</span>
+      <span class="count-max">60</span>
+      <span class="count-label">cartas</span>
+    </div>
+  </div>
+
+  <!-- Validation status -->
+  @if (validation() === null) {
+    <div class="validation-status status-pending">
+      <span class="status-icon">⏳</span>
+      Guardá el mazo para validarlo.
+    </div>
+  } @else if (validation()!.valid) {
+    <div class="validation-status status-valid">
+      <span class="status-icon">✓</span>
+      Mazo válido
+      <span class="status-detail">({{ validation()!.cardCount }} cartas)</span>
+    </div>
+  } @else {
+    <div class="validation-status status-invalid">
+      <span class="status-icon">✕</span>
+      Mazo inválido
+      <span class="status-detail">({{ validation()!.cardCount }} cartas)</span>
+    </div>
+    @if (validation()!.errors.length > 0) {
+      <ul class="validation-errors">
+        @for (err of validation()!.errors; track $index) {
+          <li class="validation-error-item">
+            <span class="error-code">{{ err.code }}</span>
+            <span class="error-message">{{ err.message }}</span>
+            @if (err.cardId) {
+              <span class="error-card-id">({{ err.cardId }})</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

@@ -1,0 +1,7 @@
+<div class="log-ribbon" aria-label="Game log" role="log" aria-live="polite">
+  @for (entry of entries(); track entry.id) {
+    <div class="log-ribbon__entry log-ribbon__entry--{{ entry.category }}" [attr.data-kind]="entry.kind">
+      <span class="log-ribbon__message">{{ entry.message }}</span>
+    </div>
+  }
+</div>

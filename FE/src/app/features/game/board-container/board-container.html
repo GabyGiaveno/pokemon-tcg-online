@@ -1,0 +1,378 @@
+<div class="board-container">
+  <canvas id="particle-effects" class="board-container__particles"></canvas>
+
+  @if (wsStatus(); as status) {
+    <div
+      class="board-container__ws-indicator"
+      [class.board-container__ws-indicator--connected]="status === 'connected'"
+      [class.board-container__ws-indicator--reconnecting]="status === 'reconnecting' || status === 'connecting'"
+      [class.board-container__ws-indicator--error]="status === 'error' || status === 'disconnected'"
+      [attr.aria-label]="'WebSocket: ' + status"
+    >
+      @switch (status) {
+        @case ('connected') {
+          <span class="board-container__ws-dot board-container__ws-dot--green"></span>
+          <span class="board-container__ws-label">Conectado</span>
+        }
+        @case ('reconnecting') {
+          <span class="board-container__ws-dot board-container__ws-dot--yellow"></span>
+          <span class="board-container__ws-label">Reconectando…</span>
+        }
+        @case ('connecting') {
+          <span class="board-container__ws-dot board-container__ws-dot--yellow"></span>
+          <span class="board-container__ws-label">Conectando…</span>
+        }
+        @case ('disconnected') {
+          <span class="board-container__ws-dot board-container__ws-dot--red"></span>
+          <span class="board-container__ws-label">Desconectado</span>
+        }
+        @case ('error') {
+          <span class="board-container__ws-dot board-container__ws-dot--red"></span>
+          <span class="board-container__ws-label">Error</span>
+        }
+      }
+    </div>
+  }
+
+  @if (screenFlash()) {
+    <div class="board-container__ko-flash" aria-hidden="true"></div>
+  }
+
+  @if (showSuddenDeathOverlay()) {
+    <div class="board-container__sudden-death-overlay" role="alert" aria-live="assertive">
+      <div class="board-container__sudden-death-card">
+        <p class="board-container__sudden-death-title">¡MUERTE SÚBITA!</p>
+        <p class="board-container__sudden-death-subtitle">Ronda {{ suddenDeathRound() }} — 1 carta de Premio cada uno</p>
+      </div>
+    </div>
+  }
+
+  @if (suddenDeathRound() > 0 && !showSuddenDeathOverlay()) {
+    <div class="board-container__sudden-death-badge" aria-label="Muerte Súbita activa">
+      Muerte Súbita — Ronda {{ suddenDeathRound() }}
+    </div>
+  }
+
+  @if (dragGhost(); as ghost) {
+    <img
+      class="board-container__drag-ghost"
+      [class.board-container__drag-ghost--settling]="dragSettling()"
+      [src]="ghost.art"
+      [style.left.px]="ghost.x"
+      [style.top.px]="ghost.y"
+      alt=""
+      aria-hidden="true"
+    />
+  }
+
+  @if (coinFlip(); as coin) {
+    <div class="board-container__coin-overlay">
+      @for (flip of [coin]; track flip.key) {
+        <app-coin-flip [result]="flip.result" />
+      }
+    </div>
+  }
+
+  <app-notifications [notifications]="gameFeedService.toasts()" />
+
+  <button
+    class="toggle-drawer-button"
+    type="button"
+    [attr.aria-label]="drawerOpen() ? 'Cerrar panel de acciones' : 'Abrir panel de acciones'"
+    (click)="toggleDrawer()"
+  >☰</button>
+
+  @if (inReadyCheck()) {
+    <app-ready-check
+      [myReady]="myReady()"
+      [opponentReady]="opponentReady()"
+      [coinDecided]="coinDecided()"
+      [iWonCoin]="iWonCoin()"
+      (ready)="onReady()"
+      (choose)="onChooseFirst($event)"
+    />
+  }
+
+  @if (waiting()) {
+    <app-waiting-screen [gameId]="gameId" />
+  } @else if (gameFinished()) {
+    <div class="board-container__overlay">
+      <div class="board-container__overlay-card">
+        <h2 class="board-container__overlay-title">{{ iWon() ? '¡Ganaste! 🏆' : 'Perdiste' }}</h2>
+        @if (finishedReason(); as reason) {
+          <p class="board-container__overlay-reason">Motivo: {{ reason }}</p>
+        }
+        <a class="btn btn--confirm" routerLink="/lobby">Volver al lobby</a>
+      </div>
+    </div>
+  }
+
+  @if (koBenchOptions(); as options) {
+    <section class="board-container__selection">
+      <div class="board-container__banner">
+        <h2 class="board-container__banner-title">Elegí tu nuevo Pokémon activo</h2>
+        @if (myKoSelection()?.prompt; as prompt) {
+          <p class="board-container__banner-desc">{{ prompt }}</p>
+        }
+      </div>
+      <div class="board-container__ko-options">
+        @for (opt of options; track opt.benchIndex) {
+          <button
+            class="board-container__ko-option"
+            type="button"
+            (click)="resolveSelection(opt.benchIndex)"
+            [attr.aria-label]="'Pokémon en banca ' + (opt.benchIndex + 1)">
+            <app-card
+              [cardId]="opt.cardId"
+              [hp]="opt.hp"
+              [maxHp]="opt.maxHp"
+              [energyCount]="opt.energyCount"
+              size="bench"
+            />
+          </button>
+        }
+      </div>
+    </section>
+  } @else if (myReorderDeckSelection(); as sel) {
+    <section class="board-container__selection board-container__selection--reorder">
+      <div class="board-container__banner">
+        <h2 class="board-container__banner-title">Reordenar cartas del mazo</h2>
+        <p class="board-container__banner-desc">{{ sel.prompt }}</p>
+      </div>
+      <div class="board-container__reorder-list">
+        @for (card of reorderDeckCards(); track card.instanceId; let i = $index; let last = $last) {
+          <div class="board-container__reorder-item">
+            <img
+              class="board-container__reorder-card-img"
+              [src]="card.imageUrl"
+              [alt]="card.cardId"
+            />
+            <div class="board-container__reorder-controls">
+              <button
+                class="btn btn--icon"
+                [disabled]="i === 0"
+                (click)="moveReorderCard(i, -1)"
+                title="Subir"
+              >▲</button>
+              <span class="board-container__reorder-pos">{{ i + 1 }}</span>
+              <button
+                class="btn btn--icon"
+                [disabled]="last"
+                (click)="moveReorderCard(i, 1)"
+                title="Bajar"
+              >▼</button>
+            </div>
+          </div>
+        }
+      </div>
+      <button class="btn btn--confirm" (click)="resolveReorderDeck()">
+        Confirmar orden
+      </button>
+    </section>
+  } @else if (myCardPickerSelection(); as pickerSel) {
+    <section class="board-container__card-picker-overlay" role="dialog" aria-label="Selección de cartas">
+      <div class="board-container__card-picker">
+        <div class="board-container__card-picker-header">
+          <h2 class="board-container__card-picker-title">{{ pickerSel.prompt }}</h2>
+          <p class="board-container__card-picker-counter">
+            {{ pickerSelected().length }} / {{ pickerSel.selectionCount }} elegidas
+          </p>
+        </div>
+        <div class="board-container__card-picker-cards">
+          @for (item of pickerSel.items; track item.instanceId; let i = $index) {
+            <button
+              class="board-container__card-picker-item"
+              [class.board-container__card-picker-item--selected]="pickerSelected().includes(item.instanceId)"
+              [style.--reveal-delay]="i * 80 + 'ms'"
+              (click)="togglePickerCard(item.instanceId)"
+              [attr.aria-pressed]="pickerSelected().includes(item.instanceId)">
+              <app-card
+                [cardId]="item.cardId"
+                size="bench"
+                [selected]="pickerSelected().includes(item.instanceId)" />
+            </button>
+          }
+        </div>
+        <div class="board-container__card-picker-footer">
+          <button
+            class="btn btn--confirm"
+            [disabled]="pickerSelected().length === 0"
+            (click)="resolveCardPicker()">
+            Confirmar selección
+          </button>
+          @if (pickerSel.selectionCount < pickerSel.items.length) {
+            <button class="btn btn--secondary" (click)="skipCardPicker()">
+              Pasar (no tomar)
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+  } @else if (myShufflePokemonSelection(); as shuffleSel) {
+    <section class="board-container__card-picker-overlay" role="dialog" aria-label="Devolver Pokémon al mazo">
+      <div class="board-container__card-picker">
+        <div class="board-container__card-picker-header">
+          <h2 class="board-container__card-picker-title">{{ shuffleSel.prompt }}</h2>
+        </div>
+        <div class="board-container__card-picker-cards">
+          @for (bp of playerField()?.bench ?? []; track bp?.instanceId; let i = $index) {
+            @if (bp && shuffleSel.validOptions.includes(bp.instanceId)) {
+              <button
+                class="board-container__card-picker-item"
+                [style.--reveal-delay]="i * 80 + 'ms'"
+                (click)="resolveShufflePokemon(bp.instanceId)">
+                <app-card [cardId]="bp.cardId" size="bench" />
+              </button>
+            }
+          }
+        </div>
+      </div>
+    </section>
+
+  } @else if (mySwitchPokemonSelection(); as switchSel) {
+    <section class="board-container__card-picker-overlay" role="dialog" aria-label="Elegir Pokémon a promover">
+      <div class="board-container__card-picker">
+        <div class="board-container__card-picker-header">
+          <h2 class="board-container__card-picker-title">{{ switchSel.prompt }}</h2>
+        </div>
+        <div class="board-container__card-picker-cards">
+          @for (opt of switchSel.options; track opt.instanceId; let i = $index) {
+            <button
+              class="board-container__card-picker-item"
+              [style.--reveal-delay]="i * 80 + 'ms'"
+              (click)="resolveSelection(opt.benchIndex)">
+              <app-card [cardId]="opt.cardId" size="bench" />
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+  } @else if (pendingSelectionUnsupported(); as pending) {
+    <div class="board-container__status board-container__status--error">
+      Tipo de selección "{{ pending.type }}" no soportado aún.
+    </div>
+  } @else if (opponentPendingSelection()) {
+    <div class="board-container__status">El rival está eligiendo su nuevo Pokémon activo…</div>
+  }
+
+  @if (loading()) {
+    <div class="board-container__status">Cargando partida...</div>
+  }
+
+  @if (inspectedCard(); as card) {
+    <app-card-inspection-overlay
+      [card]="card"
+      [mode]="inspectMode()"
+      [detail]="inspectDetail()"
+      [energyCount]="inspectEnergyCount()"
+      [canRetreat]="canRetreatFromOverlay()"
+      (attackSelected)="handleAttackSelected($event)"
+      (retreatRequested)="onRetreatFromOverlay()"
+      (closed)="closeInspectOverlay()"
+    />
+  }
+
+  @if (error(); as err) {
+    <div class="board-container__status board-container__status--error">{{ err }}</div>
+  }
+
+  @if (retreatSelecting()) {
+    <div class="board-container__hint">
+      <span>Elegí un Pokémon de tu banca para promover a activo (se descarta la energía de retirada).</span>
+      <button class="btn btn--cancel" type="button" (click)="cancelRetreat()">Cancelar</button>
+    </div>
+  }
+
+  @if (energySelecting()) {
+    <div class="board-container__hint">
+      <span>Elegí el Pokémon al que atachar {{ energyCardName() }} (activo o banca).</span>
+      <button class="btn btn--cancel" type="button" (click)="cancelEnergy()">Cancelar</button>
+    </div>
+  }
+
+  @if (evolveSelecting()) {
+    <div class="board-container__hint">
+      <span>Elegí el Pokémon a evolucionar con {{ evolveCardName() }} (activo o banca).</span>
+      <button class="btn btn--cancel" type="button" (click)="cancelEvolve()">Cancelar</button>
+    </div>
+  }
+
+  @if (trainerSelecting()) {
+    <div class="board-container__hint">
+      <span>¿Jugar {{ trainerCardName() }}?</span>
+      <button class="btn btn--confirm" type="button" (click)="playSelectedTrainer()">Jugar</button>
+      <button class="btn btn--cancel" type="button" (click)="cancelTrainer()">Cancelar</button>
+    </div>
+  }
+
+  @if (toolTargetSelecting()) {
+    <div class="board-container__hint board-container__hint--tool">
+      🔧 Elegí el Pokémon al que querés equiparle {{ toolCardName() }}
+      <button class="board-container__hint-cancel btn btn--cancel" type="button" (click)="cancelTool()">✕</button>
+    </div>
+  }
+
+  @if (alertMessage(); as msg) {
+    <div class="board-container__alert" role="alert">{{ msg }}</div>
+  }
+
+  <app-phase-indicator [phase]="phase()" [turnNumber]="turnNumber()" [isMyTurn]="isMyTurn()" />
+
+  <div
+    class="board-container__surface"
+    [class.board-container__surface--my-turn]="isMyTurn()"
+    [class.board-container__surface--opponent-turn]="!isMyTurn() && !inSetup() && !inReadyCheck()"
+  >
+    <app-player-zone
+      perspective="opponent"
+      [field]="opponentField()"
+      [isMyTurn]="!isMyTurn()"
+      [alertCardId]="alertCardId()"
+      [activeAnim]="opponentActiveAnim()"
+      [floatingDamage]="opponentFloatingDamage()"
+      (cardClicked)="handleCardClicked($event)"
+    />
+
+    @if (inSetup()) {
+      <section class="board-container__setup">
+        <div class="board-container__banner">
+          <h2 class="board-container__banner-title">Preparación</h2>
+          <p class="board-container__turn-info" [class.board-container__turn-info--mine]="isMyTurn()">
+            {{ isMyTurn() ? '🔵 Empezás vos' : '🔴 Empieza el rival' }}
+          </p>
+          <p class="board-container__banner-desc">
+            Elegí un Pokémon básico de tu mano y luego hacé click en tu zona activa o banca para colocarlo.
+          </p>
+        </div>
+        <div class="board-container__setup-actions">
+          <button class="btn btn--confirm" (click)="confirmSetup()">Confirmar preparación</button>
+        </div>
+      </section>
+    }
+
+    <app-player-zone
+      perspective="player"
+      [field]="playerField()"
+      [isMyTurn]="isMyTurn()"
+      [interactionMode]="interactionMode()"
+      [selectedCardId]="selectedCardId()"
+      [alertCardId]="alertCardId()"
+      [activeAnim]="playerActiveAnim()"
+      [floatingDamage]="playerFloatingDamage()"
+      [dragKind]="dragKind()"
+      [retreatSelecting]="retreatSelecting()"
+      [energySelecting]="energySelecting()"
+      [evolveSelecting]="evolveSelecting()"
+      [toolTargeting]="toolTargetSelecting()"
+      [actions]="availableActions()"
+      (cardClicked)="handleCardClicked($event)"
+      (zoneClicked)="handleZoneClicked($event)"
+      (execute)="handleAction($event)"
+    />
+  </div>
+
+
+  <app-log-ribbon [entries]="gameFeedService.entries()" />
+</div>

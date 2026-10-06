@@ -1,0 +1,18 @@
+package ar.edu.utn.frc.tup.piii.models.cards;
+
+/** Domain enum: BASIC_POKEMON, STAGE1, STAGE2, POKEMON_EX, MEGA_POKEMON, BASIC_ENERGY,
+ * SPECIAL_ENERGY, ITEM, SUPPORTER, STADIUM, POKEMON_TOOL. */
+public enum CardType {
+    BASIC_POKEMON,
+    STAGE1,
+    STAGE2,
+    POKEMON_EX,
+    MEGA_POKEMON,
+    BASIC_ENERGY,
+    SPECIAL_ENERGY,
+    ITEM,
+    SUPPORTER,
+    STADIUM,
+    POKEMON_TOOL
+
+}

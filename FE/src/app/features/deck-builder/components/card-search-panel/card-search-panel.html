@@ -1,0 +1,62 @@
+<div class="search-panel">
+  <div class="search-set-badge">Set base: XY</div>
+  <div class="search-field">
+    <label for="card-search">BUSCAR CARTA</label>
+    <input
+      id="card-search"
+      type="text"
+      [value]="searchTerm()"
+      (input)="onSearchInput($any($event).target.value)"
+      placeholder="Nombre de la carta…"
+      class="search-input"
+    />
+  </div>
+
+  <div class="filters-row">
+    <div class="filter-field filter-field--supertype">
+      <label for="filter-supertype">SUPERTIPO</label>
+      <select
+        (change)="onSupertypeChange($any($event).target.value)"
+        class="filter-select"
+        id="filter-supertype"
+      >
+        <option value="">— Todos —</option>
+        @for (st of supertypes; track st) {
+          <option [value]="st">{{ st }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="filter-field filter-field--types">
+    <label>TIPO</label>
+    <div class="type-buttons-grid">
+      <button
+        type="button"
+        class="type-btn"
+        [class.type-btn--active]="selectedType() === ''"
+        (click)="onTypeSelect('')"
+      >
+        TODOS
+      </button>
+      @for (t of types; track t) {
+        <button
+          type="button"
+          class="type-btn"
+          [class.type-btn--active]="selectedType() === t"
+          (click)="onTypeSelect(t)"
+        >
+          <span class="type-btn-dot" [style.background]="typeColors[t]"></span>
+          {{ t }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="search-loading">
+      <span class="search-loading-dot"></span>
+      Buscando…
+    </div>
+  }
+</div>

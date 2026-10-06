@@ -1,0 +1,246 @@
+.settings-root {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Gear button — mirrors the lobby's .icon-btn. */
+.settings-gear {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.settings-gear:hover {
+  background: rgba(222, 148, 14, 0.2);
+  border-color: #DE940E;
+}
+
+/* Invisible click-catcher so clicking outside closes the dropdown. */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: transparent;
+}
+
+.settings-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 210;
+  width: 220px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(7, 24, 45, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+
+.settings-item + .settings-item {
+  margin-top: 8px;
+}
+
+.settings-item:hover {
+  background: rgba(222, 148, 14, 0.18);
+  border-color: rgba(222, 148, 14, 0.35);
+}
+
+.settings-item-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.settings-item--toggle {
+  justify-content: space-between;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-switch--on {
+  background: linear-gradient(90deg, #f0b82b, #DE940E);
+  border-color: rgba(222, 148, 14, 0.5);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s;
+}
+
+.toggle-switch--on .toggle-knob {
+  transform: translateX(18px);
+}
+
+.settings-item--danger {
+  color: #ff6b5e;
+  border-color: rgba(231, 76, 60, 0.3);
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.settings-item--danger:hover {
+  background: rgba(231, 76, 60, 0.22);
+  border-color: rgba(231, 76, 60, 0.55);
+  color: #ff8077;
+}
+
+/* Logout confirmation dialog. */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.confirm-card {
+  width: min(92vw, 360px);
+  margin-top: clamp(240px, 36vh, 360px);
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(7, 24, 45, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.confirm-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.confirm-card p {
+  margin: 0 0 18px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.confirm-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.confirm-btn--danger {
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+  color: #fff;
+}
+
+/* Credits panel */
+.credits-card {
+  width: min(92vw, 400px);
+  margin-top: clamp(200px, 30vh, 320px);
+  padding: 28px 24px 20px;
+  border-radius: 18px;
+  background: rgba(7, 24, 45, 0.95);
+  border: 1px solid rgba(222, 148, 14, 0.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.credits-card h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  background: linear-gradient(90deg, #f0b82b, #DE940E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.credits-subtitle {
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+}
+
+.credits-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credits-list li {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.credits-list li:hover {
+  background: rgba(222, 148, 14, 0.12);
+  border-color: rgba(222, 148, 14, 0.3);
+}

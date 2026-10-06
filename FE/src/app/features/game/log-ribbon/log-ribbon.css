@@ -1,0 +1,72 @@
+.log-ribbon {
+  position: fixed;
+  bottom: clamp(120px, 16vh, 180px);
+  left: clamp(8px, 1vw, 16px);
+  z-index: 100;
+  width: clamp(180px, 22vw, 280px);
+  max-height: 2.4rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(8, 12, 24, 0.78);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: default;
+  transition:
+    max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 300ms ease,
+    padding 300ms ease;
+}
+
+.log-ribbon:hover {
+  max-height: 260px;
+  border-radius: 12px;
+  padding: 8px 12px;
+  overflow-y: auto;
+}
+
+.log-ribbon__entry {
+  display: flex;
+  align-items: center;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  animation: log-ribbon-in 0.2s ease-out;
+}
+
+.log-ribbon:hover .log-ribbon__entry {
+  white-space: normal;
+}
+
+/* Only show the latest entry when collapsed */
+.log-ribbon:not(:hover) .log-ribbon__entry:not(:first-child) {
+  display: none;
+}
+
+@keyframes log-ribbon-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.log-ribbon__entry--combat  { border-left: 3px solid #e53935; }
+.log-ribbon__entry--game    { border-left: 3px solid #1e88e5; }
+.log-ribbon__entry--card    { border-left: 3px solid #43a047; }
+.log-ribbon__entry--status  { border-left: 3px solid #fb8c00; }
+.log-ribbon__entry--system  { border-left: 3px solid #8e24aa; }
+
+.log-ribbon__message {
+  margin-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

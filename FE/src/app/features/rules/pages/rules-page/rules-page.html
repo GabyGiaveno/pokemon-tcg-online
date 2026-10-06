@@ -1,0 +1,65 @@
+<div class="rules">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" type="button" appHoverSound (click)="goBack()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Volver
+      </button>
+    </div>
+    <div class="topbar-center">
+      <h1 class="page-title">Aprender a Jugar</h1>
+    </div>
+    <div class="topbar-right">
+      <app-settings-menu />
+    </div>
+  </header>
+
+  <div class="rules-content">
+    <nav class="rules-nav">
+      <div class="nav-header">
+        <span class="nav-icon">📖</span>
+        <span class="nav-title">Guía de Reglas</span>
+      </div>
+      @for (section of sections; track section.title; let i = $index) {
+        <button
+          type="button"
+          class="nav-item"
+          appHoverSound
+          [class.nav-item--active]="activeSection() === i"
+          (click)="selectSection(i)"
+        >
+          <span class="nav-item-icon">{{ section.icon }}</span>
+          <span class="nav-item-text">{{ section.title }}</span>
+        </button>
+      }
+    </nav>
+
+    <main class="rules-main">
+      <div class="section-card glass">
+        <div class="section-header">
+          <span class="section-icon">{{ sections[activeSection()].icon }}</span>
+          <h2 class="section-title">{{ sections[activeSection()].title }}</h2>
+        </div>
+        <div class="section-body">
+          @for (paragraph of sections[activeSection()].content; track paragraph) {
+            <p class="section-text">{{ paragraph }}</p>
+          }
+        </div>
+        <div class="section-nav-buttons">
+          @if (activeSection() > 0) {
+            <button class="section-nav-btn" type="button" appHoverSound (click)="selectSection(activeSection() - 1)">
+              ← {{ sections[activeSection() - 1].title }}
+            </button>
+          }
+          @if (activeSection() < sections.length - 1) {
+            <button class="section-nav-btn section-nav-btn--next" type="button" appHoverSound (click)="selectSection(activeSection() + 1)">
+              {{ sections[activeSection() + 1].title }} →
+            </button>
+          }
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

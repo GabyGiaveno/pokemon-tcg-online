@@ -1,0 +1,54 @@
+<app-auth-shell>
+  <section class="auth-page">
+    <header class="page-header">
+      <h2>Iniciar sesión</h2>
+    </header>
+
+    <app-auth-feedback [feedback]="feedback()"></app-auth-feedback>
+
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>Usuario</span>
+        <div class="control" [class.error]="hasError('identifier', 'required')">
+          <span class="icon">@</span>
+          <input type="text" formControlName="identifier" placeholder="tuusuario" autocomplete="username" [disabled]="loading()" />
+        </div>
+        @if (hasError('identifier', 'required')) {
+          <small class="field-error">El usuario es obligatorio.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Contraseña</span>
+        <div class="control" [class.error]="hasError('password', 'required')">
+          <span class="icon">*</span>
+          <input type="password" formControlName="password" placeholder="••••••••" autocomplete="current-password" [disabled]="loading()" />
+        </div>
+        @if (hasError('password', 'required')) {
+          <small class="field-error">La contraseña es obligatoria.</small>
+        }
+      </label>
+
+      <div class="form-row">
+        <label class="remember">
+          <input type="checkbox" formControlName="rememberMe" [disabled]="loading()" />
+          <span>Recordarme</span>
+        </label>
+        <a routerLink="/auth/forgot-password">Olvidé mi contraseña</a>
+      </div>
+
+      <button type="submit" class="primary-btn" [disabled]="loading()">
+        {{ loading() ? 'Ingresando...' : 'Entrar' }}
+      </button>
+    </form>
+
+    <p class="switch">
+      ¿No tenés cuenta?
+      <a routerLink="/auth/register">Crear cuenta</a>
+    </p>
+  </section>
+</app-auth-shell>
+
+@if (entering()) {
+  <app-pokeball-loader caption="Ingresando al lobby" />
+}

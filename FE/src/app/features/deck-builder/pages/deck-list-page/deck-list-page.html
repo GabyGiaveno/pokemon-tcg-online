@@ -1,0 +1,165 @@
+<div class="page-container">
+  <!-- ══════════════════════════════════════════════════════
+       Header
+       ══════════════════════════════════════════════════════ -->
+  <header class="list-header">
+    <div class="header-title-block">
+      <span class="header-kicker">TCG Deck Builder</span>
+      <h1 class="page-title">Mis Mazos</h1>
+    </div>
+    <div class="header-actions">
+      <app-settings-menu />
+      <a routerLink="/lobby" class="btn-home" aria-label="Volver al lobby" title="Volver al lobby">
+        <span class="back-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11.5 12 4l9 7.5" />
+            <path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" />
+            <path d="M9 20v-6h6v6" />
+          </svg>
+        </span>
+        <span class="back-label">Volver al lobby</span>
+      </a>
+      <a routerLink="/decks/new" class="btn-create">+ Crear nuevo mazo</a>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════
+       Loading state
+       ══════════════════════════════════════════════════════ -->
+  @if (loading()) {
+    <div class="state-message state-loading">
+      <span class="state-icon">⟳</span>
+      Cargando mazos...
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════
+       Error state
+       ══════════════════════════════════════════════════════ -->
+  @if (error(); as err) {
+    <div class="state-message state-error">
+      <span class="state-icon">✕</span>
+      {{ err }}
+      <button type="button" class="retry-btn" (click)="onRetry()">Reintentar</button>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════
+       Empty state
+       ══════════════════════════════════════════════════════ -->
+  @if (!loading() && !error() && decks().length === 0) {
+    <div class="state-message state-empty">
+      <p class="empty-text">Todavía no tenés mazos guardados.</p>
+      <a routerLink="/decks/new" class="empty-link">Crear tu primer mazo</a>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════
+       Deck list
+       ══════════════════════════════════════════════════════ -->
+  @if (!loading() && !error() && decks().length > 0) {
+    <div class="deck-grid">
+      @for (deck of decks(); track deck.id) {
+        <article class="deck-card">
+          <!-- Header row: name + validity -->
+          <div class="deck-card-header">
+            <h2 class="deck-name">{{ deck.name }}</h2>
+            <span class="deck-validity"
+                  [class.valid]="deck.valid"
+                  [class.invalid]="!deck.valid">
+              {{ deck.valid ? 'Válido' : 'Borrador / inválido' }}
+            </span>
+          </div>
+
+          <!-- Stats row -->
+          <div class="deck-stats">
+            <span class="deck-stat">
+              <span class="stat-label">ID</span>
+              <span class="stat-value">#{{ deck.id }}</span>
+            </span>
+            <span class="deck-stat">
+              <span class="stat-label">Cartas</span>
+              <span class="stat-value">{{ deck.cardCount }} / 60</span>
+            </span>
+            <span class="deck-stat">
+              <span class="stat-label">Únicas</span>
+              <span class="stat-value">{{ deck.cards.length }}</span>
+            </span>
+            <span class="deck-stat">
+              <span class="stat-label">Creado</span>
+              <span class="stat-value">{{ deck.createdAt | date:'dd/MM/yyyy' }}</span>
+            </span>
+          </div>
+
+          <!-- Card preview images -->
+          <div class="deck-preview">
+            @let preview = previewCards(deck);
+            @if (preview.length > 0) {
+              @for (card of preview; track card.cardId) {
+                <img
+                  [src]="card.imageUrlSmall"
+                  [alt]="card.cardName"
+                  class="preview-image"
+                  loading="lazy"
+                />
+              }
+            } @else {
+              <div class="preview-placeholder">Sin cartas</div>
+            }
+          </div>
+
+          <!-- Validation message -->
+          @if (validationMessages()[deck.id]; as msg) {
+            <div class="validation-feedback">{{ msg }}</div>
+          }
+
+          <!-- Actions -->
+          <div class="deck-actions">
+            <a [routerLink]="['/decks', deck.id, 'edit']" class="btn-action btn-edit">Editar</a>
+            @if (!deck.valid) {
+              <button
+                type="button"
+                class="btn-action btn-validate"
+                [disabled]="validatingDeckId() === deck.id"
+                (click)="onValidateDeck(deck)"
+              >
+                @if (validatingDeckId() === deck.id) {
+                  ⟳ Validando…
+                } @else {
+                  Validar
+                }
+              </button>
+            }
+            <button
+              type="button"
+              class="btn-action btn-delete"
+              [disabled]="deletingDeckId() !== null && deletingDeckId() === deck.id"
+              (click)="onDeleteDeck(deck)"
+            >
+              @if (deletingDeckId() === deck.id) {
+                ⟳ Eliminando…
+              } @else {
+                Eliminar
+              }
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════
+       Delete confirmation modal
+       ══════════════════════════════════════════════════════ -->
+  @if (deckPendingDelete(); as pendingDeck) {
+    <app-game-confirm-dialog
+      title="Eliminar mazo"
+      [message]="'¿Seguro que querés eliminar el mazo \u0022' + pendingDeck.name + '\u0022? Esta acción no se puede deshacer.'"
+      confirmText="ELIMINAR"
+      cancelText="CANCELAR"
+      [danger]="true"
+      (confirm)="onConfirmDeleteDeck()"
+      (cancel)="onCancelDeleteDeck()"
+    />
+  }
+</div>

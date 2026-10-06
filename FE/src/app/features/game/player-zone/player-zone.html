@@ -1,0 +1,186 @@
+<div class="player-zone" [class.player-zone--opponent]="isOpponent()" [class.player-zone--player]="!isOpponent()">
+
+  <!-- Lateral left: prize cards -->
+  <div class="player-zone__prizes" [title]="'Premios restantes: ' + prizeCount()">
+    @for (prize of prizeSlots(); track $index) {
+      <app-card
+        size="prize"
+        [faceDown]="true"
+        [cardId]="prizeCardId(prize)"
+      />
+    }
+    <span class="player-zone__pile-count player-zone__prizes-count">{{ prizeCount() }}</span>
+  </div>
+
+  <!-- Core: active + bench -->
+  <div class="player-zone__core">
+    <div
+      class="player-zone__active"
+      [class.player-zone__active--target]="energySelecting()"
+      [class.player-zone__active--evolve]="evolveSelecting()"
+      [class.player-zone__active--tool-target]="toolTargeting()"
+      [class.player-zone__active--lunge]="activeAnim() === 'lunge'"
+      [class.player-zone__active--hit]="activeAnim() === 'hit'"
+      [class.player-zone__active--ko]="activeAnim() === 'ko'"
+      [class.player-zone__active--droppable]="isActiveDroppable()"
+      [attr.data-drop]="isOpponent() ? null : 'ACTIVE'"
+    >
+      @if (activeCardInstance(); as activeCard) {
+        <app-card
+          size="active"
+          [card]="activeCard"
+          [hp]="activePokemon()?.hp ?? null"
+          [maxHp]="activePokemon()?.maxHp ?? null"
+          [energyCount]="activePokemon()?.attachedEnergies?.length ?? 0"
+          [conditions]="activePokemon()?.conditions ?? []"
+          [alert]="alertCardId() === activeCard.instanceId"
+          (cardClick)="handleActiveClick()"
+        />
+      } @else {
+        <div
+          class="player-zone__empty-active"
+          [class.player-zone__empty-active--target]="isPlacing()"
+          (click)="handleActiveClick()"
+        ></div>
+      }
+
+      @if (floatingDamage(); as dmg) {
+        <span
+          class="player-zone__damage-float"
+          [class.player-zone__damage-float--flip]="isOpponent()"
+          aria-hidden="true"
+        >-{{ dmg }}</span>
+      }
+    </div>
+
+    <div
+      class="player-zone__bench"
+      [class.player-zone__bench--retreat]="retreatSelecting()"
+      [class.player-zone__bench--energy]="energySelecting()"
+      [class.player-zone__bench--evolve]="evolveSelecting()"
+    >
+      @for (slot of benchSlots(); track $index; let i = $index) {
+        <div
+          class="player-zone__bench-slot"
+          [class.player-zone__bench-slot--tool-target]="toolTargeting()"
+          [class.player-zone__bench-slot--droppable]="isBenchSlotDroppable(slot)"
+          [attr.data-drop]="isOpponent() ? null : 'BENCH_' + i"
+        >
+          @if (benchCardInstance(slot); as benchCard) {
+            <app-card
+              size="bench"
+              [card]="benchCard"
+              [hp]="benchHp(slot)"
+              [maxHp]="benchMaxHp(slot)"
+              [energyCount]="benchEnergyCount(slot)"
+              [alert]="alertCardId() === benchCard.instanceId"
+              (cardClick)="handleBenchClick(i)"
+            />
+          } @else {
+            <div
+              class="player-zone__empty-bench"
+              [class.player-zone__empty-bench--target]="isPlacing()"
+              (click)="handleBenchClick(i)"
+            ></div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Lateral right: deck + discard -->
+  <div class="player-zone__pile-group">
+    <div class="player-zone__deck" [title]="'Mazo: ' + deckSize() + ' cartas'">
+      <app-card size="pile" [faceDown]="true" [cardId]="'deck'" />
+      <span class="player-zone__pile-count">{{ deckSize() }}</span>
+    </div>
+
+    <div class="player-zone__discard" [title]="'Descarte: ' + discardCount() + ' cartas'">
+      @if (discardTop(); as topCard) {
+        <app-card size="pile" [card]="topCard" (cardClick)="handleDiscardClick()" />
+      } @else {
+        <div class="player-zone__discard-empty"></div>
+      }
+      <span class="player-zone__pile-count">{{ discardCount() }}</span>
+    </div>
+  </div>
+
+  <!-- Action bar: only rendered for the player's own half -->
+  @if (!isOpponent() && actions()) {
+    <div class="player-zone__actions">
+      <button
+        class="player-zone__action-btn player-zone__action-btn--attack"
+        [disabled]="!actions()?.attack?.enabled"
+        [title]="actions()?.attack?.reason ?? ''"
+        (click)="execute.emit('attack')"
+      ><span class="player-zone__action-icon">⚔</span><span>Attack</span></button>
+
+      <button
+        class="player-zone__action-btn player-zone__action-btn--retreat"
+        [disabled]="!actions()?.retreat?.enabled"
+        [title]="actions()?.retreat?.reason ?? ''"
+        (click)="execute.emit('retreat')"
+      ><span class="player-zone__action-icon">↩</span><span>Retreat</span></button>
+
+      <button
+        class="player-zone__action-btn player-zone__action-btn--energy"
+        [disabled]="!actions()?.playEnergy?.enabled"
+        [title]="actions()?.playEnergy?.reason ?? ''"
+        (click)="execute.emit('playEnergy')"
+      ><span class="player-zone__action-icon">⚡</span><span>Play Energy</span></button>
+
+      <button
+        class="player-zone__action-btn player-zone__action-btn--trainer"
+        [disabled]="!actions()?.playTrainer?.enabled"
+        [title]="actions()?.playTrainer?.reason ?? ''"
+        (click)="execute.emit('playTrainer')"
+      ><span class="player-zone__action-icon">▣</span><span>Play Trainer</span></button>
+
+      <button
+        class="player-zone__action-btn player-zone__action-btn--evolve"
+        [disabled]="!actions()?.evolve?.enabled"
+        [title]="actions()?.evolve?.reason ?? ''"
+        (click)="execute.emit('evolve')"
+      ><span class="player-zone__action-icon">▲</span><span>Evolve</span></button>
+
+      <button
+        class="player-zone__action-btn player-zone__action-btn--end"
+        [disabled]="!actions()?.endTurn?.enabled"
+        [title]="actions()?.endTurn?.reason ?? ''"
+        (click)="execute.emit('endTurn')"
+      ><span class="player-zone__action-icon">⏻</span><span>End Turn</span></button>
+
+      <button
+        class="player-zone__action-btn player-zone__action-btn--concede"
+        title="Concede the game"
+        (click)="execute.emit('concede')"
+      ><span class="player-zone__action-icon">🏳</span></button>
+    </div>
+  }
+
+  <!-- Hand: fan (player) or backs+count (opponent) -->
+  <div class="player-zone__hand">
+    @if (isOpponent()) {
+      <div class="player-zone__hand-backs">
+        @for (back of opponentHandBacks(); track $index) {
+          <app-card size="hand" [faceDown]="true" [cardId]="'back'" [fanIndex]="$index" [fanTotal]="opponentHandBacks().length" />
+        }
+        <span class="player-zone__hand-count">{{ opponentHandSize() }}</span>
+      </div>
+    } @else {
+      @for (card of hand(); track card.instanceId; let i = $index) {
+        <app-card
+          size="hand"
+          [card]="card"
+          [appCardDrag]="dragPayloadFor(card)"
+          [selected]="selectedCardId() === card.instanceId"
+          [playable]="isBasicPokemon(card)"
+          [alert]="alertCardId() === card.instanceId"
+          [fanIndex]="i"
+          [fanTotal]="hand().length"
+          (tap)="handleHandCardClick(card)"
+        />
+      }
+    }
+  </div>
+</div>

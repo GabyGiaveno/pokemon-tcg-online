@@ -1,0 +1,35 @@
+<section class="card-grid-panel" aria-label="Grilla de cartas">
+  <div class="grid-scroll">
+    @if (loading()) {
+      <div class="grid" aria-hidden="true">
+        @for (i of skeletonItems; track i) {
+          <div class="skeleton-card"></div>
+        }
+      </div>
+    } @else if (error(); as err) {
+      <div class="state-message state-error" role="alert">
+        <p>{{ err }}</p>
+        <button type="button" class="retry-btn" (click)="retry.emit()">Reintentar</button>
+      </div>
+    } @else if (cards().length === 0) {
+      <div class="state-message state-empty">
+        <p>No se encontraron cartas con los filtros seleccionados.</p>
+        <p class="hint">Probá limpiar los filtros o cambiar la expansión.</p>
+      </div>
+    } @else {
+      <div class="grid">
+        @for (card of cards(); track card.id) {
+          <app-card-preview
+            [card]="card"
+            [selected]="card.id === selectedId()"
+            (select)="onCardSelect($event)"
+          />
+        }
+      </div>
+    }
+  </div>
+
+  @if (!loading() && !error() && cards().length > 0) {
+    <app-pagination [page]="page()" [size]="size()" [total]="total()" (pageChange)="pageChange.emit($event)" />
+  }
+</section>

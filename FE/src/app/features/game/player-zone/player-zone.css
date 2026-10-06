@@ -1,0 +1,647 @@
+/* ═══════════════════════════════════════════════════════════════════
+   player-zone — one half of the board (TCG_BOARD.md layout).
+   Grid: [prizes] [core: active+bench] [deck/discard], hand strip below.
+   The opponent instance gets `transform: rotate(180deg)` (ADR-2):
+   children are NOT counter-rotated, hit-boxes rotate with the element.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.player-zone {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 1fr auto auto;
+  min-height: 0;
+  gap: clamp(4px, 1vh, 10px);
+  align-items: center;
+  padding: clamp(4px, 0.8vh, 10px) clamp(8px, 1.5vw, 20px);
+}
+
+.player-zone--opponent {
+  transform: rotate(180deg);
+}
+
+/* ── Hand strip ──
+   The hand is NOT counter-rotated: a second 3D transform (with its own
+   transform-origin) on top of the surface tilt offset the browser's
+   hit-testing, so clicks on hand cards missed. With the single surface
+   tilt only, the hand lies slightly angled with the table (natural) and
+   receives clicks accurately. It also sits above siblings for input. */
+.player-zone__hand {
+  position: relative;
+  z-index: 4;
+}
+
+/* ── Prizes (lateral-left, TCG_BOARD.md §5) ── */
+
+.player-zone__prizes {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / 2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  align-content: center;
+}
+
+.player-zone__prizes-count {
+  position: absolute;
+  bottom: -0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ── Core: active + bench ── */
+
+.player-zone__core {
+  grid-column: 2;
+  grid-row: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 1vh, 10px);
+}
+
+.player-zone__active {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.player-zone__bench {
+  display: flex;
+  gap: clamp(4px, 0.8vw, 10px);
+  justify-content: center;
+}
+
+/* Each bench slot is a drop target (wraps either a card or an empty slot). */
+.player-zone__bench-slot {
+  display: flex;
+}
+
+/* Point 4 — valid drop target highlight while dragging a hand card. */
+.player-zone__active--droppable,
+.player-zone__bench-slot--droppable {
+  border-radius: 0.6rem;
+  outline: 2px dashed rgba(240, 208, 96, 0.8);
+  outline-offset: 2px;
+  animation: drop-target-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes drop-target-pulse {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(240, 208, 96, 0.35); }
+  50% { box-shadow: 0 0 18px 5px rgba(240, 208, 96, 0.65); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-zone__active--droppable,
+  .player-zone__bench-slot--droppable {
+    animation-duration: 1ms;
+  }
+}
+
+/* Retreat selection: pulse the benched Pokémon as promotable targets (Slice 1). */
+.player-zone__bench--retreat app-card {
+  cursor: pointer;
+  border-radius: 0.5rem;
+  outline: 2px solid rgba(34, 197, 94, 0.85);
+  outline-offset: 2px;
+  box-shadow: 0 0 14px 3px rgba(34, 197, 94, 0.5);
+  animation: retreat-target-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes retreat-target-pulse {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 0 18px 5px rgba(34, 197, 94, 0.7); }
+}
+
+/* Energy attachment: pulse active + bench Pokémon as targets (Slice 2, cyan). */
+.player-zone__bench--energy app-card,
+.player-zone__active--target app-card {
+  cursor: pointer;
+  border-radius: 0.5rem;
+  outline: 2px solid rgba(56, 189, 248, 0.85);
+  outline-offset: 2px;
+  animation: energy-target-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes energy-target-pulse {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(56, 189, 248, 0.4); }
+  50% { box-shadow: 0 0 18px 5px rgba(56, 189, 248, 0.75); }
+}
+
+/* Evolution: pulse active + bench Pokémon as evolve targets (Slice 3, violet). */
+.player-zone__bench--evolve app-card,
+.player-zone__active--evolve app-card {
+  cursor: pointer;
+  border-radius: 0.5rem;
+  outline: 2px solid rgba(167, 139, 250, 0.9);
+  outline-offset: 2px;
+  animation: evolve-target-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes evolve-target-pulse {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(167, 139, 250, 0.45); }
+  50% { box-shadow: 0 0 18px 5px rgba(167, 139, 250, 0.8); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Slice 5 — combat animations (presentation-only; driven by BoardAnimationService).
+   The opponent half is rotated 180°, so a "lunge up" reads as a lunge toward the
+   player — the authentic tabletop direction — without per-side variants.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Attacker lunges forward then recoils (TCG_BOARD.md: 600ms). */
+.player-zone__active--lunge app-card {
+  animation: active-lunge 600ms ease-in-out;
+}
+@keyframes active-lunge {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(-22%) scale(1.06); }
+  60%  { transform: translateY(-12%) scale(1.04); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Defender shudders and flashes white on impact (800ms). */
+.player-zone__active--hit app-card {
+  animation: active-hit 800ms ease-out;
+}
+@keyframes active-hit {
+  0%   { transform: translateX(0); filter: brightness(2.4); }
+  15%  { transform: translateX(-6px) rotate(-2deg); }
+  30%  { transform: translateX(6px) rotate(2deg); filter: brightness(1.6); }
+  45%  { transform: translateX(-4px); }
+  60%  { transform: translateX(4px); filter: brightness(1.15); }
+  100% { transform: translateX(0); filter: brightness(1); }
+}
+
+/* Knocked-out Pokémon darkens, tips over and fades (1000ms, holds final state). */
+.player-zone__active--ko app-card {
+  animation: active-ko 1000ms ease-in forwards;
+}
+@keyframes active-ko {
+  0%   { transform: rotate(0) scale(1); filter: grayscale(0) brightness(1); opacity: 1; }
+  40%  { transform: rotate(-8deg) scale(0.98); filter: grayscale(0.6) brightness(0.7); }
+  100% { transform: rotate(-14deg) scale(0.9); filter: grayscale(1) brightness(0.35); opacity: 0.15; }
+}
+
+/* Floating damage number rises and fades over the active slot. */
+.player-zone__damage-float {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  pointer-events: none;
+  z-index: 6;
+  font-weight: 800;
+  font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+  color: #ff5a4d;
+  text-shadow: 0 0 6px #000, 0 2px 2px #000;
+  animation: damage-float 800ms ease-out forwards;
+}
+/* Opponent half is rotated 180°: use a flipped keyframe so the number stays upright. */
+.player-zone__damage-float--flip {
+  animation-name: damage-float-flip;
+}
+@keyframes damage-float {
+  0%   { opacity: 0; transform: translate(-50%, 10%) scale(0.8); }
+  20%  { opacity: 1; transform: translate(-50%, -10%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+}
+@keyframes damage-float-flip {
+  0%   { opacity: 0; transform: translate(-50%, 10%) rotate(180deg) scale(0.8); }
+  20%  { opacity: 1; transform: translate(-50%, -10%) rotate(180deg) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) rotate(180deg) scale(1); }
+}
+
+/* Respect reduced-motion: keep the damage number (information) but drop the motion. */
+@media (prefers-reduced-motion: reduce) {
+  .player-zone__active--lunge app-card,
+  .player-zone__active--hit app-card,
+  .player-zone__active--ko app-card,
+  .player-zone__damage-float {
+    animation-duration: 1ms;
+  }
+}
+
+/* Empty active slot — dashed gold outline + faint Pokéball motif (TCG_BOARD.md §3) */
+.player-zone__empty-active {
+  width: var(--game-active-card-width, clamp(120px, 12vw, 150px));
+  aspect-ratio: 2.5 / 3.5;
+  border: 2px dashed rgba(240, 208, 96, 0.5);
+  border-radius: 0.6rem;
+  background:
+    radial-gradient(circle at 50% 40%, transparent 0 32%, rgba(240, 208, 96, 0.18) 32% 38%, transparent 38%),
+    linear-gradient(to bottom, transparent 47%, rgba(240, 208, 96, 0.1) 47% 53%, transparent 53%),
+    radial-gradient(ellipse at center, rgba(240, 208, 96, 0.04) 0%, transparent 70%);
+  box-shadow: inset 0 0 16px rgba(0,0,0,0.3), 0 0 8px rgba(240, 208, 96, 0.08);
+}
+
+.player-zone__empty-active--target {
+  cursor: pointer;
+  border-color: rgba(34, 197, 94, 0.7);
+  box-shadow: 0 0 12px 2px rgba(34, 197, 94, 0.35);
+}
+
+/* Empty bench slot — smaller dashed oval (TCG_BOARD.md §4) */
+.player-zone__empty-bench {
+  width: var(--game-bench-card-width, clamp(80px, 8vw, 96px));
+  aspect-ratio: 2.5 / 3.5;
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 0.5rem;
+  background:
+    radial-gradient(circle at 50% 40%, transparent 0 34%, rgba(255,255,255,0.07) 34% 40%, transparent 40%);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.25);
+}
+
+.player-zone__empty-bench--target {
+  cursor: pointer;
+  border-color: rgba(34, 197, 94, 0.7);
+  box-shadow: 0 0 10px 2px rgba(34, 197, 94, 0.3);
+}
+
+/* ── Deck / discard (lateral-right, TCG_BOARD.md §6-§7) ── */
+
+.player-zone__pile-group {
+  grid-column: 3;
+  grid-row: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-zone__deck,
+.player-zone__discard {
+  position: relative;
+}
+
+.player-zone__discard-empty {
+  width: var(--game-pile-card-width, clamp(66px, 6vw, 76px));
+  aspect-ratio: 2.5 / 3.5;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 0.4rem;
+  background: rgba(0,0,0,0.15);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+}
+
+.player-zone__pile-count {
+  position: absolute;
+  bottom: -0.4rem;
+  right: -0.4rem;
+  z-index: 3;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1.5px solid var(--gb-gold, #d4a030);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0 3px #000;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Action bar (between core and hand, player only) ── */
+
+.player-zone__actions {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 0;
+}
+
+.player-zone__action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(8, 12, 24, 0.72);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+  backdrop-filter: blur(6px);
+  transition: background 130ms ease, border-color 130ms ease, opacity 130ms ease;
+}
+
+.player-zone__action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.player-zone__action-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.player-zone__action-icon {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.player-zone__action-btn--attack:not(:disabled) {
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+.player-zone__action-btn--attack:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+}
+
+.player-zone__action-btn--end {
+  background: rgba(201, 168, 76, 0.18);
+  border-color: rgba(201, 168, 76, 0.55);
+  color: var(--gold-bright, #f0d060);
+  padding: 6px 16px;
+  font-size: 0.75rem;
+  margin-left: 4px;
+}
+.player-zone__action-btn--end:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.3);
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.25);
+}
+
+.player-zone__action-btn--concede {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: rgba(252, 165, 165, 0.7);
+  padding: 5px 9px;
+}
+.player-zone__action-btn--concede:hover {
+  background: rgba(220, 38, 38, 0.22);
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #fca5a5;
+}
+
+/* ── Hand strip (TCG_BOARD.md §8) ── */
+
+.player-zone__hand {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: var(--game-hand-min-height, 70px);
+  padding: var(--game-hand-padding, 8px 16px 6px);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  box-shadow:
+    inset 0 -4px 20px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(201,168,76,0.15),
+    0 -2px 12px rgba(0,0,0,0.3);
+  backdrop-filter: blur(2px);
+}
+
+.player-zone__hand app-card {
+  margin-left: -1.4rem;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0s;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+}
+
+.player-zone__hand app-card:first-child {
+  margin-left: 0;
+}
+
+.player-zone__hand app-card:hover {
+  transform: translateY(-18px) scale(1.12);
+  z-index: 5;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+}
+
+.player-zone__hand-backs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.player-zone__hand-backs app-card {
+  margin-left: -1.6rem;
+}
+
+.player-zone__hand-backs app-card:first-child {
+  margin-left: 0;
+}
+
+.player-zone__hand-count {
+  margin-left: 0.5rem;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1.5px solid var(--gb-gold, #d4a030);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0 3px #000;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 1024px) {
+  .player-zone {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .player-zone__prizes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Tool target pulse ───────────────────────────── */
+@keyframes tool-target-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--gb-gold), 0 0 12px 4px rgba(180,130,0,0.4); }
+  50%       { box-shadow: 0 0 0 3px var(--gold-bright), 0 0 24px 8px rgba(255,200,0,0.6); }
+}
+
+.player-zone__active--tool-target app-card,
+.player-zone__bench-slot--tool-target app-card {
+  animation: tool-target-pulse 1.1s ease-in-out infinite;
+  cursor: crosshair;
+}
+
+@media (max-width: 480px) {
+  .player-zone {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .player-zone__prizes,
+  .player-zone__pile-group {
+    grid-column: 1;
+    flex-direction: row;
+    display: flex;
+  }
+
+  .player-zone__core {
+    grid-column: 1;
+  }
+
+  .player-zone__hand {
+    grid-column: 1;
+    overflow-x: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Height-aware responsive — compact for shorter viewports
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-height: 900px) {
+  .player-zone {
+    gap: clamp(3px, 0.6vh, 6px);
+    padding: clamp(3px, 0.5vh, 6px) clamp(6px, 1vw, 14px);
+  }
+
+  .player-zone__core {
+    gap: clamp(3px, 0.6vh, 6px);
+  }
+
+  .player-zone__actions {
+    padding: 3px 0;
+    gap: 4px;
+  }
+
+  .player-zone__action-btn {
+    padding: 4px 9px;
+    font-size: 0.65rem;
+  }
+
+  .player-zone__action-btn--end {
+    padding: 5px 14px;
+    font-size: 0.7rem;
+  }
+
+  .player-zone__hand {
+    padding: 4px 12px 4px;
+  }
+
+  .player-zone__hand app-card {
+    margin-left: -1.2rem;
+  }
+
+  .player-zone__hand app-card:hover {
+    transform: translateY(-14px) scale(1.08);
+    z-index: 5;
+  }
+}
+
+@media (max-height: 800px) {
+  .player-zone {
+    gap: var(--game-zone-gap, clamp(2px, 0.55vh, 5px));
+    padding: var(--game-zone-padding-block, 2px) var(--game-zone-padding-inline, clamp(6px, 1vw, 14px));
+  }
+
+  .player-zone__core {
+    gap: var(--game-core-gap, clamp(2px, 0.55vh, 5px));
+  }
+
+  .player-zone__bench {
+    gap: var(--game-bench-gap, clamp(3px, 0.55vw, 7px));
+  }
+
+  .player-zone__actions {
+    padding: 2px 0;
+    gap: 3px;
+  }
+
+  .player-zone__action-btn {
+    padding: 3px 8px;
+    font-size: 0.62rem;
+    gap: 3px;
+  }
+
+  .player-zone__action-btn--end {
+    padding: 4px 12px;
+    font-size: 0.68rem;
+  }
+
+  .player-zone__action-btn--concede {
+    padding: 3px 7px;
+  }
+
+  .player-zone__hand {
+    padding: var(--game-hand-padding, 2px 6px);
+  }
+
+  .player-zone__hand app-card {
+    margin-left: -1rem;
+  }
+
+  .player-zone__hand app-card:hover {
+    transform: translateY(-10px) scale(1.06);
+    z-index: 5;
+  }
+}
+
+@media (max-height: 720px) {
+  .player-zone {
+    gap: 2px;
+    padding: var(--game-zone-padding-block, 2px) 4px;
+  }
+
+  .player-zone__core {
+    gap: 2px;
+  }
+
+  .player-zone__bench {
+    gap: 4px;
+  }
+
+  .player-zone__actions {
+    padding: 1px 0;
+    gap: 3px;
+  }
+
+  .player-zone__action-btn {
+    padding: 2px 6px;
+    font-size: 0.58rem;
+    gap: 2px;
+  }
+
+  .player-zone__action-btn--end {
+    padding: 3px 10px;
+    font-size: 0.62rem;
+  }
+
+  .player-zone__action-btn--concede {
+    padding: 2px 6px;
+  }
+
+  .player-zone__hand {
+    padding: var(--game-hand-padding, 1px 6px);
+  }
+
+  .player-zone__hand app-card {
+    margin-left: -0.9rem;
+  }
+
+  .player-zone__hand app-card:hover {
+    transform: translateY(-6px) scale(1.04);
+    z-index: 5;
+  }
+}

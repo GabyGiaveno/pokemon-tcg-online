@@ -1,0 +1,100 @@
+<div class="settings-root">
+  <button
+    class="settings-gear"
+    type="button"
+    appHoverSound
+    (click)="toggleMenu()"
+    aria-label="Configuración"
+    title="Configuración"
+  >⚙</button>
+
+  @if (open()) {
+    <div class="settings-backdrop" (click)="closeMenu()"></div>
+    <div class="settings-dropdown" (click)="$event.stopPropagation()">
+      <button
+        class="settings-item settings-item--toggle"
+        type="button"
+        appHoverSound
+        role="switch"
+        [attr.aria-checked]="musicEnabled()"
+        (click)="toggleMusic()"
+      >
+        <span class="settings-item-label">
+          <span class="settings-item-icon" aria-hidden="true">{{ musicEnabled() ? '🎵' : '🎶' }}</span>
+          Música
+        </span>
+        <span class="toggle-switch" [class.toggle-switch--on]="musicEnabled()" aria-hidden="true">
+          <span class="toggle-knob"></span>
+        </span>
+      </button>
+
+      <button
+        class="settings-item settings-item--toggle"
+        type="button"
+        appHoverSound
+        role="switch"
+        [attr.aria-checked]="soundEnabled()"
+        (click)="toggleSound()"
+        >
+        <span class="settings-item-label">
+          <span class="settings-item-icon" aria-hidden="true">{{ soundEnabled() ? '🔊' : '🔇' }}</span>
+          Sonido
+        </span>
+        <span class="toggle-switch" [class.toggle-switch--on]="soundEnabled()" aria-hidden="true">
+          <span class="toggle-knob"></span>
+        </span>
+      </button>
+
+      <button class="settings-item" type="button" appHoverSound (click)="openCredits()">
+        <span class="settings-item-label">
+          <span class="settings-item-icon" aria-hidden="true">⭐</span>
+          Créditos
+        </span>
+      </button>
+
+      <button class="settings-item settings-item--danger" type="button" appHoverSound (click)="openLogoutConfirm()">
+        <span class="settings-item-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </span>
+        Cerrar sesión
+      </button>
+    </div>
+  }
+
+  @if (showLogoutConfirm()) {
+    <div class="confirm-backdrop" (click)="cancelLogout()">
+      <div class="confirm-card" (click)="$event.stopPropagation()">
+        <h3>¿Seguro que querés cerrar sesión?</h3>
+        <p>Vas a volver a la pantalla de inicio.</p>
+        <div class="confirm-actions">
+          <button class="confirm-btn confirm-btn--ghost" type="button" appHoverSound (click)="cancelLogout()">Cancelar</button>
+          <button class="confirm-btn confirm-btn--danger" type="button" appHoverSound (click)="logout()">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showCredits()) {
+    <div class="confirm-backdrop" (click)="closeCredits()">
+      <div class="credits-card" (click)="$event.stopPropagation()">
+        <h3>Créditos</h3>
+        <p class="credits-subtitle">Juego desarrollado por los siguientes integrantes:</p>
+        <ul class="credits-list">
+          <li>412240 — Jesús Aguirre</li>
+          <li>404909 — Lorenzo Araujo</li>
+          <li>412142 — Joaquín Cortez</li>
+          <li>421239 — Gabriel Giaveno</li>
+          <li>421399 — Valentino Mellia Bonetto</li>
+          <li>421291 — Ramiro Ezequiel Reyna</li>
+        </ul>
+        <div class="confirm-actions">
+          <button class="confirm-btn confirm-btn--danger" type="button" appHoverSound (click)="closeCredits()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

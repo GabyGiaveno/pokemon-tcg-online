@@ -1,0 +1,38 @@
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.logo-copy {
+  display: flex;
+  align-items: center;
+}
+
+.logo-mark {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: 0 0 28px rgba(66, 130, 255, 0.45);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  white-space: nowrap;
+  color: #f7f9ff;
+}
+
+@media (max-width: 480px) {
+  .logo-wrap { gap: 0.5rem; }
+
+  .logo-mark {
+    width: 2.2rem;
+    height: 2.2rem;
+    box-shadow: 0 0 16px rgba(66, 130, 255, 0.4);
+  }
+
+  h1 { font-size: 1rem; }
+}

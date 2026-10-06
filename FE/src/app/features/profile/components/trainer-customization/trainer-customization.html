@@ -1,0 +1,37 @@
+<div class="panel glass">
+  <div class="panel-title">SKINS Y PERSONALIZACIÓN</div>
+
+  <div class="tabs">
+    @for (tab of tabs; track tab.key) {
+      <button
+        class="tab-btn"
+        type="button"
+        [class.tab-btn--active]="activeTab() === tab.key"
+        (click)="setTab(tab.key)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <div class="items-grid">
+    @for (item of filteredItems; track item.id) {
+      <button
+        class="item-card"
+        type="button"
+        [class.item-card--selected]="selectedId() === item.id"
+        [class.item-card--locked]="!item.unlocked"
+        (click)="item.unlocked && selectItem.emit(item.id)"
+        [disabled]="!item.unlocked"
+      >
+        <div class="item-preview" [style]="item.color ? { 'background': item.color } : {}">
+          <span class="item-icon">{{ item.previewIcon }}</span>
+        </div>
+        <span class="item-name">{{ item.name }}</span>
+        @if (!item.unlocked) {
+          <span class="item-lock">🔒</span>
+        }
+      </button>
+    }
+  </div>
+</div>

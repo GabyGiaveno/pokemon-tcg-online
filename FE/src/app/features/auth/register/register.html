@@ -1,0 +1,84 @@
+<app-auth-shell>
+  <section class="auth-page">
+    <header class="page-header">
+      <h2>Crear cuenta</h2>
+    </header>
+
+    <app-auth-feedback [feedback]="feedback()"></app-auth-feedback>
+
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>Username</span>
+        <div class="control" [class.error]="hasControlError('username', 'required') || hasControlError('username', 'minlength') || hasControlError('username', 'maxlength')">
+          <span class="icon">U</span>
+          <input type="text" formControlName="username" placeholder="ash.kanto" autocomplete="username" [disabled]="loading()" />
+        </div>
+        @if (hasControlError('username', 'required')) {
+          <small class="field-error">El usuario es obligatorio.</small>
+        }
+        @if (hasControlError('username', 'minlength')) {
+          <small class="field-error">El usuario debe tener entre 3 y 50 caracteres.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Email</span>
+        <div class="control" [class.error]="hasControlError('email', 'required') || hasControlError('email', 'email')">
+          <span class="icon">@</span>
+          <input type="email" formControlName="email" placeholder="entrenador@uni.edu" autocomplete="email" [disabled]="loading()" />
+        </div>
+        @if (hasControlError('email', 'required')) {
+          <small class="field-error">El email es obligatorio.</small>
+        }
+        @if (hasControlError('email', 'email')) {
+          <small class="field-error">El email no tiene un formato válido.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Contraseña</span>
+        <div class="control" [class.error]="hasControlError('password', 'required')">
+          <span class="icon">*</span>
+          <input type="password" formControlName="password" placeholder="••••••••" autocomplete="new-password" [disabled]="loading()" />
+        </div>
+        @if (hasControlError('password', 'required')) {
+          <small class="field-error">La contraseña es obligatoria.</small>
+        }
+      </label>
+
+      <app-password-strength [strength]="strength"></app-password-strength>
+
+      <label class="field">
+        <span>Confirmar contraseña</span>
+        <div class="control" [class.error]="hasControlError('confirmPassword', 'required') || (!passwordsMatch && form.controls.confirmPassword.touched)">
+          <span class="icon">✓</span>
+          <input type="password" formControlName="confirmPassword" placeholder="Repetí la contraseña" autocomplete="new-password" [disabled]="loading()" />
+        </div>
+        @if (hasControlError('confirmPassword', 'required')) {
+          <small class="field-error">Confirmá la contraseña.</small>
+        }
+        @if (!passwordsMatch && form.controls.confirmPassword.touched) {
+          <small class="field-error">Las contraseñas no coinciden.</small>
+        }
+      </label>
+
+      <!--
+      <label class="field">
+        <span>Avatar opcional</span>
+        <div class="control">
+          <span class="icon">A</span>
+          <input type="text" formControlName="avatarUrl" placeholder="URL del avatar o imagen" />
+        </div>
+      </label>-->
+
+      <button type="submit" class="primary-btn" [disabled]="loading()">
+        {{ loading() ? 'Creando...' : 'Crear cuenta' }}
+      </button>
+    </form>
+
+    <p class="switch">
+      ¿Ya tenés una cuenta?
+      <a routerLink="/auth/login">Volver al login</a>
+    </p>
+  </section>
+</app-auth-shell>

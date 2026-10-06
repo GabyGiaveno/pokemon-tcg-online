@@ -1,0 +1,10 @@
+<div class="panel glass">
+  <div class="panel-title">LOGROS DESTACADOS</div>
+  <div class="achievements-list">
+    @for (ach of achievements(); track ach.id) {
+      <app-achievement-item [achievement]="ach" />
+    } @empty {
+      <div class="empty-msg">Aún no hay logros disponibles.</div>
+    }
+  </div>
+</div>

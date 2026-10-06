@@ -1,0 +1,25 @@
+<div
+  class="pokemon-holo-card"
+  [class.finish-normal]="finish() === 'normal'"
+  [class.finish-holo]="finish() === 'holo'"
+  [class.finish-reverse]="finish() === 'reverse'"
+  [class.finish-ultra]="finish() === 'ultra'"
+  [class.finish-rainbow]="finish() === 'rainbow'"
+  [class.finish-gold]="finish() === 'gold'"
+  [class.finish-secret]="finish() === 'secret'"
+  [appVanillaTilt]="tiltOptions() ?? defaultTiltOptions"
+  appHoloPointer
+>
+  <img
+    class="pokemon-holo-card__image"
+    [src]="imageUrl()"
+    [alt]="'Carta ' + name() + ' ampliada'"
+    draggable="false"
+    (error)="onImgError($event)"
+  />
+  <span class="pokemon-holo-card__fallback" aria-hidden="true">{{ name() }}</span>
+  <span class="pokemon-holo-card__texture" aria-hidden="true"></span>
+  <span class="pokemon-holo-card__shine" aria-hidden="true"></span>
+  <span class="pokemon-holo-card__glare" aria-hidden="true"></span>
+  <span class="pokemon-holo-card__sparkles" aria-hidden="true"></span>
+</div>

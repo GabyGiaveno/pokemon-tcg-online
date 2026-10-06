@@ -1,0 +1,16 @@
+<div class="achievement" [class.achievement--locked]="!achievement().unlocked">
+  <div class="achievement-icon">
+    <span>{{ achievement().icon }}</span>
+  </div>
+  <div class="achievement-info">
+    <strong class="achievement-name">{{ achievement().name }}</strong>
+    <span class="achievement-desc">{{ achievement().description }}</span>
+  </div>
+  <div class="achievement-status">
+    @if (achievement().unlocked) {
+      <span class="status-dot status-dot--done" title="Completado">✓</span>
+    } @else {
+      <span class="status-dot status-dot--pending" title="Pendiente">⋯</span>
+    }
+  </div>
+</div>

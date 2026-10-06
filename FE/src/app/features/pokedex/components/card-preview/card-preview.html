@@ -1,0 +1,25 @@
+<button
+  type="button"
+  class="card-preview"
+  appHoverSound
+  soundVariant="card"
+  [class.selected]="selected()"
+  [style.--accent-color]="accentColor"
+  [attr.aria-pressed]="selected()"
+  (click)="onClick()"
+>
+  @if (card().hp) {
+    <span class="hp-badge">{{ card().hp }} HP</span>
+  }
+  <div class="card-image-wrap">
+    <img
+      class="card-image"
+      [src]="card().imageUrlSmall"
+      [alt]="'Carta ' + card().name"
+      loading="lazy"
+      (error)="onImgError($event)"
+    />
+    <div class="image-fallback" aria-hidden="true">{{ card().name }}</div>
+  </div>
+  <span class="card-name">{{ card().name }}</span>
+</button>

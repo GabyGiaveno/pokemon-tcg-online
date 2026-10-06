@@ -1,0 +1,17 @@
+<div class="waiting-overlay">
+  <div class="waiting-card">
+    <div class="waiting-corners" aria-hidden="true"></div>
+
+    <div class="pokeball-spinner" aria-hidden="true"></div>
+
+    <h2 class="waiting-title">Esperando al rival…</h2>
+    <p class="waiting-desc">La partida comenzará apenas se conecte el segundo jugador.</p>
+
+    <p class="waiting-game-id">
+      ID de partida:
+      <span class="waiting-game-id-value">{{ gameId() }}</span>
+    </p>
+
+    <a class="btn--leave" routerLink="/lobby">Salir al lobby</a>
+  </div>
+</div>

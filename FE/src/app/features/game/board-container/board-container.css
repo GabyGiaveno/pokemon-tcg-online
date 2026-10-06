@@ -1,0 +1,1394 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
+
+/* Board design tokens (--wood-*, --play-*, --board-tilt, etc.) live in the
+   GLOBAL styles.css :root — a component-level :root is scoped away by Angular's
+   emulated encapsulation and would not resolve here or in child components. */
+
+* {
+  box-sizing: border-box;
+}
+
+.board-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto auto;
+  gap: clamp(2px, 0.3vh, 5px);
+  padding: clamp(6px, 1.2vh, 14px);
+  background-color: var(--play-deep);
+  background-image:
+    /* energy symbols tile */
+    /* team tints */
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.03), transparent 70%),
+    linear-gradient(180deg, var(--rival-tint) 0%, transparent 35%, transparent 65%, var(--player-tint) 100%),
+    linear-gradient(180deg, var(--play-surface), var(--play-deep));
+  color: var(--text-cream);
+  overflow: hidden;
+
+  /* ── Card size tokens (height-aware base; overridden in height breakpoints) ── */
+  --game-active-card-width: clamp(100px, min(10vw, 11vh), 140px);
+  --game-bench-card-width: clamp(62px, min(6.5vw, 7vh), 88px);
+  --game-hand-card-width: clamp(76px, min(8vw, 8.5vh), 104px);
+  --game-prize-card-width: clamp(52px, min(5vw, 5.5vh), 64px);
+  --game-pile-card-width: clamp(54px, min(5.5vw, 5.5vh), 62px);
+  /* ── Layout tokens (height-aware; overridden in height breakpoints) ── */
+  --game-hand-dock-height: auto;
+  --game-action-bar-height: auto;
+  --game-bottom-safe-space: 0px;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(201, 168, 76, 0.3),
+    inset 0 0 80px 30px rgba(0, 0, 0, 0.55),
+    inset 0 0 200px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== Play surface — tilted "real table" angle (FIX 2) ===== */
+/* Wraps both player-zones (active/bench/prizes/piles + hands). The surface
+   itself is rotated on the X axis to recede into the distance; each
+   player-zone's hand strip is counter-rotated back to flat so it stays
+   readable (FIX 2 requirement). */
+.board-container__surface {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  gap: clamp(2px, 0.3vh, 5px);
+  min-height: 0;
+  /* 3D table angle, click-safe: rotateX WITHOUT `transform-style: preserve-3d`.
+     preserve-3d put the player's half in independent 3D space behind the surface
+     plane → its clicks landed behind the board (only the rival half was hittable).
+     As a single flattened transformed plane (no preserve-3d, no nested 3D child
+     transforms), the browser inverts the transform when hit-testing, so BOTH
+     halves receive clicks. Pivot from near the player's edge so the table recedes
+     toward the rival. */
+  transform: perspective(var(--board-perspective)) rotateX(var(--board-tilt));
+  transform-origin: 50% 85%;
+}
+
+.board-container__surface > * {
+  min-height: 0;
+}
+
+/* Turn indicator: tint the active player's half — blue glow when it's my turn,
+   red glow when it's the opponent's. The `::after` overlay sits above the felt
+   but below the cards (pointer-events: none) and fades in on the correct side. */
+.board-container__surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease, background 400ms ease;
+}
+
+.board-container__surface--my-turn::after {
+  opacity: 1;
+  background: linear-gradient(to top, rgba(40, 90, 200, 0.28), rgba(40, 90, 200, 0) 45%);
+}
+
+.board-container__surface--opponent-turn::after {
+  opacity: 1;
+  background: linear-gradient(to bottom, rgba(200, 40, 40, 0.28), rgba(200, 40, 40, 0) 45%);
+}
+
+/* Explicit row placement so both zones stay mirrored around the same
+   midline (row 2) regardless of whether the setup banner is present (FIX 5). */
+.board-container__surface app-player-zone:first-of-type {
+  grid-row: 1;
+}
+
+.board-container__surface app-player-zone:last-of-type {
+  grid-row: 3;
+}
+
+/* Vanishing-point shading: darker toward the far (opponent) edge, lighter near the player */
+.board-container__surface::before {
+  content: '';
+  position: absolute;
+  inset: -4% -2%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.12) 35%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  border-radius: 12px;
+}
+
+/* Decorative central Pokéball, non-blocking */
+.board-container::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(80px, 9vw, 130px);
+  height: clamp(80px, 9vw, 130px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid rgba(201, 168, 76, 0.55);
+  background:
+    linear-gradient(180deg,
+      rgba(220, 50, 50, 0.22) 0%,
+      rgba(220, 50, 50, 0.22) 47%,
+      rgba(201, 168, 76, 0.6) 47%,
+      rgba(201, 168, 76, 0.6) 53%,
+      rgba(20, 60, 20, 0.15) 53%,
+      rgba(20, 60, 20, 0.15) 100%
+    );
+  box-shadow:
+    0 0 40px 10px rgba(201, 168, 76, 0.12),
+    0 0 80px 20px rgba(0, 0, 0, 0.2),
+    inset 0 0 20px rgba(0,0,0,0.3);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Central dot of Pokéball */
+.board-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(20px, 2.6vw, 34px);
+  height: clamp(20px, 2.6vw, 34px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2.5px solid rgba(201, 168, 76, 0.7);
+  background: radial-gradient(circle at 35% 35%, rgba(201, 168, 76, 0.3), var(--play-deep));
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.25);
+}
+
+/* ===== Player info indicators (Hearthstone hero-portrait style) ===== */
+/* Reusable classes, ready for wiring once a player-info component exists. */
+.player-info {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  background: rgba(13, 43, 24, 0.6);
+  border: 1px solid var(--gold-light, #c9a84c);
+}
+
+.player-info--player {
+  bottom: clamp(8px, 1vh, 16px);
+  left: clamp(8px, 1vw, 16px);
+}
+
+.player-info--opponent {
+  top: clamp(8px, 1vh, 16px);
+  left: clamp(8px, 1vw, 16px);
+}
+
+.player-info__portrait {
+  width: clamp(32px, 3.4vw, 44px);
+  height: clamp(32px, 3.4vw, 44px);
+  border-radius: 50%;
+  border: 2px solid var(--gold-bright, #f0d060);
+  background: linear-gradient(160deg, var(--wood-light, #6b3a1f), var(--wood-dark, #3b1f0a));
+  object-fit: cover;
+}
+
+.player-info__name {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: clamp(0.65rem, 0.85vw, 0.85rem);
+  font-weight: 700;
+  color: var(--text-cream, #f5e6c8);
+  text-shadow: 0 0 4px #000;
+}
+
+.player-info__prizes {
+  font-size: clamp(0.6rem, 0.75vw, 0.75rem);
+  font-weight: 700;
+  color: var(--gold-bright, #f0d060);
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+/* ===== Stadium card (centered between rival/player halves) ===== */
+/* Reusable class, ready for wiring once a stadium zone component exists. */
+.stadium-zone {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(110px, 13vw, 150px);
+  height: clamp(44px, 5.6vw, 64px);
+  border: 3px solid #c7ccd6;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(199, 204, 214, 0.18), rgba(13, 43, 24, 0.6));
+  box-shadow:
+    0 0 16px 4px rgba(199, 204, 214, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  font-size: clamp(0.6rem, 0.8vw, 0.8rem);
+  font-weight: 700;
+  color: var(--text-cream, #f5e6c8);
+  text-shadow: 0 0 4px #000;
+}
+
+.stadium-zone--empty {
+  border-style: dashed;
+  opacity: 0.4;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Particle effects overlay (rendering hooked up in later slices) */
+.board-container__particles {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* Slice 5 — full-screen white flash on a knockout (TCG_BOARD.md: 1000ms). */
+.board-container__ko-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
+  animation: ko-flash 1000ms ease-out forwards;
+}
+@keyframes ko-flash {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-container__ko-flash { animation-duration: 1ms; }
+}
+
+/* Point 4 — floating card preview that follows the pointer while dragging from hand. */
+.board-container__drag-ghost {
+  position: fixed;
+  z-index: 1200;
+  width: clamp(70px, 7vw, 96px);
+  aspect-ratio: 2.5 / 3.5;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  border-radius: 0.4rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+/* Coin-flip overlay — centered, above the board, non-interactive (card flips + opening flip). */
+.board-container__coin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+/* On drop, glide the ghost to the target slot and fade it out (TCG_BOARD: "vuela a la zona destino"). */
+.board-container__drag-ghost--settling {
+  transition: left 0.36s ease, top 0.36s ease, opacity 0.36s ease, transform 0.36s ease;
+  transform: translate(-50%, -50%) rotate(0deg) scale(0.6);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-container__drag-ghost--settling {
+    transition-duration: 1ms;
+  }
+}
+
+.toggle-drawer-button {
+  display: none;
+}
+
+.board-container__status {
+  position: relative;
+  z-index: 2;
+  max-width: min(92vw, 48rem);
+  width: fit-content;
+  margin: 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(8, 12, 24, 0.5);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  font-size: 0.75rem;
+  color: var(--text-cream);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-container__status--error {
+  background: rgba(110, 20, 20, 0.62);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.board-container__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 17, 32, 0.78);
+}
+
+.board-container__overlay-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 40px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--wood-light), var(--wood-dark));
+  border: 2px solid var(--gold-light);
+  text-align: center;
+  color: var(--text-cream);
+}
+
+.board-container__overlay-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--gold-bright);
+}
+
+.board-container__overlay-reason {
+  opacity: 0.75;
+}
+
+.board-container__banner {
+  text-align: center;
+  padding: 8px 16px;
+}
+
+.board-container__banner-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  font-weight: 800;
+  color: var(--gold-bright);
+}
+
+.board-container__banner-desc {
+  font-size: clamp(0.7rem, 0.9vw, 0.85rem);
+  opacity: 0.75;
+}
+
+/* Whose turn it is — shown to BOTH players during preparation. */
+.board-container__turn-info {
+  margin: 4px 0;
+  font-weight: 800;
+  font-size: clamp(0.9rem, 1.3vw, 1.15rem);
+  color: #ff8a8a;
+  text-shadow: 0 0 6px #000;
+}
+
+.board-container__turn-info--mine {
+  color: #8ab8ff;
+}
+
+.board-container__setup {
+  position: absolute;
+  top: 50%;
+  right: clamp(24px, 4vw, 72px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: clamp(210px, 17vw, 300px);
+  max-width: calc(100vw - 24px);
+  padding: clamp(8px, 1vh, 12px);
+  border-radius: 14px;
+  background: rgba(8, 12, 24, 0.82);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(240, 208, 96, 0.12);
+  backdrop-filter: blur(6px);
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.board-container__setup-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.board-container__setup .board-container__banner {
+  padding: 0;
+}
+
+.board-container__setup .board-container__banner-title {
+  font-size: clamp(0.9rem, 1.1vw, 1.1rem);
+}
+
+.board-container__setup .board-container__banner-desc {
+  margin: 4px 0 0;
+  font-size: clamp(0.66rem, 0.78vw, 0.78rem);
+  line-height: 1.25;
+}
+
+.board-container__setup .board-container__turn-info {
+  margin: 3px 0;
+  font-size: clamp(0.76rem, 0.95vw, 0.9rem);
+}
+
+.board-container__setup .btn {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 0.76rem;
+  pointer-events: auto;
+}
+
+.board-container__selection {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(8, 12, 24, 0.7);
+  border: 1px solid var(--gold-light);
+}
+
+.board-container__selection-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── KO bench picker: card grid ─────────────────────────────────── */
+
+.board-container__ko-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.board-container__ko-option {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.board-container__ko-option:hover,
+.board-container__ko-option:focus-visible {
+  transform: translateY(-6px);
+  outline: 2px solid var(--gold-bright, #f0d060);
+  outline-offset: 2px;
+  border-radius: 10px;
+  box-shadow: 0 0 16px rgba(240, 208, 96, 0.6);
+}
+
+.board-container__ko-option:focus-visible {
+  outline: 2px solid var(--gold-bright, #f0d060);
+}
+
+.board-container__ko-option:active {
+  transform: translateY(-2px);
+}
+
+/* ── REORDER_DECK selection panel ─────────────────────────────────────────── */
+
+.board-container__selection--reorder {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.board-container__reorder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.board-container__reorder-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(240, 208, 96, 0.2);
+}
+
+.board-container__reorder-card-img {
+  width: 54px;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.board-container__reorder-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.board-container__reorder-pos {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold-light, #f0d060);
+  min-width: 18px;
+  text-align: center;
+}
+
+.btn--icon {
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  min-width: 28px;
+}
+
+.btn--icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── end reorder ──────────────────────────────────────────────────────────── */
+
+.board-container__controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.board-container__controls-left {
+  grid-column: 1 / -1;
+}
+
+.board-container__controls-right {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--gold-light);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-cream);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: rgba(240, 208, 96, 0.16);
+}
+
+.btn--confirm {
+  border-color: rgba(34, 197, 94, 0.55);
+  background: rgba(34, 197, 94, 0.18);
+  color: #bbf7d0;
+}
+
+.btn--confirm:hover {
+  background: rgba(34, 197, 94, 0.3);
+}
+
+.btn--cancel {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+}
+
+.btn--cancel:hover {
+  background: rgba(239, 68, 68, 0.28);
+}
+
+/* Soft, auto-fading alert reason (e.g. BE rejection) — non-invasive */
+.board-container__alert {
+  position: fixed;
+  top: clamp(10px, 2vh, 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  max-width: min(80vw, 30rem);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(110, 20, 20, 0.86);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  color: #fecaca;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  animation: fadeIn 160ms ease-out;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Retreat / target-selection hint banner */
+.board-container__hint {
+  position: relative;
+  z-index: 6;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(8, 12, 24, 0.82);
+  border: 1px solid var(--gold-light);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 14px rgba(240, 208, 96, 0.2);
+  color: var(--text-cream);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  max-width: min(92vw, 64rem);
+}
+
+.board-container__hint span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Responsive breakpoints ===== */
+
+@media (max-width: 1024px) {
+  .board-container {
+    --board-tilt: 12deg;
+    --board-frame: 32px;
+    gap: clamp(4px, 1.2vh, 10px);
+  }
+
+  .toggle-drawer-button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-height: 900px) {
+  .board-container {
+    --board-tilt: 10deg;
+    --game-active-card-width: clamp(90px, min(8vw, 9vh), 108px);
+    --game-bench-card-width: clamp(58px, min(5.5vw, 6vh), 72px);
+    --game-hand-card-width: clamp(72px, min(7vw, 7.5vh), 86px);
+    --game-prize-card-width: clamp(48px, min(4.5vw, 4.5vh), 56px);
+    --game-pile-card-width: clamp(50px, min(5vw, 5vh), 56px);
+    --game-hand-min-height: 60px;
+    --game-hand-dock-height: 110px;
+    --game-action-bar-height: 36px;
+    --game-bottom-safe-space: 2px;
+    gap: 3px;
+    padding: clamp(4px, 0.8vh, 10px);
+  }
+
+  .board-container__surface {
+    gap: 2px;
+  }
+}
+
+@media (max-height: 800px) {
+  .board-container {
+    --board-tilt: 8deg;
+    --game-active-card-width: clamp(86px, min(8vw, 8vh), 102px);
+    --game-bench-card-width: 60px;
+    --game-hand-card-width: 74px;
+    --game-prize-card-width: 50px;
+    --game-pile-card-width: 52px;
+    --game-zone-gap: clamp(2px, 0.55vh, 5px);
+    --game-zone-padding-block: 2px;
+    --game-zone-padding-inline: clamp(6px, 1vw, 14px);
+    --game-core-gap: clamp(2px, 0.55vh, 5px);
+    --game-bench-gap: clamp(3px, 0.55vw, 7px);
+    --game-prize-gap: 3px;
+    --game-pile-gap: 4px;
+    --game-hand-min-height: 50px;
+    --game-hand-padding: 2px 6px;
+    --game-hand-dock-height: 96px;
+    --game-action-bar-height: 32px;
+    --game-bottom-safe-space: 1px;
+    --game-control-padding: 6px 14px;
+    --game-control-font-size: clamp(0.76rem, 0.9vw, 0.82rem);
+    gap: 2px;
+    padding: clamp(4px, 0.8vh, 8px);
+  }
+
+  .board-container__surface {
+    grid-template-rows: 1fr auto 1.15fr;
+    gap: 2px;
+    transform-origin: 50% 88%;
+  }
+
+  .board-container::after {
+    width: clamp(48px, 6vw, 84px);
+    height: clamp(48px, 6vw, 84px);
+  }
+
+  .board-container::before {
+    width: clamp(14px, 1.8vw, 24px);
+    height: clamp(14px, 1.8vw, 24px);
+  }
+
+  .board-container__banner {
+    padding: 4px 12px;
+  }
+
+  .board-container__banner-title {
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+  }
+
+  .board-container__banner-desc {
+    display: none;
+  }
+
+  .board-container__turn-info {
+    margin: 2px 0;
+    font-size: clamp(0.78rem, 1.05vw, 0.95rem);
+  }
+
+  .board-container__setup {
+    right: clamp(18px, 3vw, 42px);
+    width: clamp(190px, 16vw, 250px);
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .board-container__setup .board-container__banner-title {
+    font-size: 0.9rem;
+  }
+
+  .board-container__setup .board-container__turn-info {
+    margin: 2px 0;
+    font-size: 0.76rem;
+  }
+
+  .board-container__setup .board-container__banner-desc {
+    font-size: 0.66rem;
+    line-height: 1.18;
+  }
+
+  .board-container__setup .btn {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
+
+  .board-container__selection {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .board-container__selection-options {
+    gap: 6px;
+  }
+
+  .board-container__reorder-list {
+    gap: 5px;
+  }
+
+  .board-container__reorder-item {
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .board-container__reorder-card-img {
+    width: 44px;
+  }
+
+  .btn {
+    padding: var(--game-control-padding, 8px 20px);
+    font-size: var(--game-control-font-size, 0.85rem);
+  }
+
+  .board-container__status,
+  .board-container__hint {
+    padding-block: 4px;
+  }
+
+  .board-container__hint {
+    gap: 8px;
+    max-width: min(92vw, 58rem);
+    font-size: 0.76rem;
+  }
+
+  .board-container__card-picker-overlay {
+    padding: 8px;
+  }
+
+  .board-container__card-picker {
+    gap: 0.75rem;
+    padding: 1rem;
+    max-height: 92vh;
+  }
+
+  .board-container__card-picker-cards {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-height: 720px) {
+  .board-container {
+    --board-tilt: 5deg;
+    --game-active-card-width: clamp(78px, min(7.5vw, 7.5vh), 92px);
+    --game-bench-card-width: 54px;
+    --game-hand-card-width: 66px;
+    --game-prize-card-width: 46px;
+    --game-pile-card-width: 48px;
+    --game-hand-min-height: 44px;
+    --game-hand-padding: 1px 6px;
+    --game-hand-dock-height: 84px;
+    --game-action-bar-height: 28px;
+    --game-bottom-safe-space: 0px;
+    --game-control-padding: 5px 12px;
+    --game-control-font-size: clamp(0.72rem, 0.85vw, 0.78rem);
+    padding: 4px;
+  }
+
+  .board-container__surface {
+    transform-origin: 50% 90%;
+  }
+
+  .board-container__banner-desc {
+    display: none;
+  }
+
+  .board-container__selection {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .board-container__setup {
+    top: 46%;
+    right: 18px;
+    width: min(180px, 32vw);
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .board-container__setup .board-container__banner-title {
+    font-size: 0.82rem;
+  }
+
+  .board-container__setup .board-container__turn-info {
+    font-size: 0.68rem;
+  }
+
+  .board-container__setup .board-container__banner-desc {
+    display: none;
+  }
+
+  .board-container__setup .btn {
+    padding: 4px 8px;
+    font-size: 0.64rem;
+  }
+
+  .board-container__reorder-card-img {
+    width: 38px;
+  }
+
+  .board-container__hint {
+    border-radius: 12px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  .board-container__card-picker {
+    gap: 0.5rem;
+    padding: 0.75rem;
+    max-height: 94vh;
+  }
+
+  .board-container__card-picker-title {
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+  }
+
+  .board-container__card-picker-item {
+    padding: 2px;
+  }
+}
+
+@media (max-width: 900px) {
+  .board-container__setup {
+    top: auto;
+    right: 18px;
+    bottom: clamp(54px, 8vh, 78px);
+    width: min(220px, 42vw);
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .board-container {
+    --board-tilt: 0deg;
+    --board-frame: 6px;
+    grid-template-rows: auto auto 1fr auto auto auto;
+    gap: 6px;
+    border-width: 6px;
+    box-shadow: none;
+  }
+
+  .board-container__surface {
+    transform: none;
+  }
+
+  .board-container__surface::before {
+    display: none;
+  }
+
+  .board-container::after,
+  .board-container::before {
+    display: none;
+  }
+
+  .toggle-drawer-button {
+    bottom: 1rem;
+    right: 1rem;
+    top: auto;
+  }
+}
+
+/* ===== Animation keyframes (defined here, applied to elements in later slices) ===== */
+
+/* Robar carta: carta desliza desde la baraja hacia la mano */
+@keyframes cardDraw {
+  from {
+    transform: translateY(-40px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Jugar carta: se eleva de la mano y vuela a la zona destino */
+@keyframes cardPlay {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(-30px) scale(1.1);
+  }
+  100% {
+    transform: translateY(-60px) scale(0.9);
+    opacity: 0.9;
+  }
+}
+
+/* Ataque: el Pokémon activo se lanza hacia adelante con shake en el defensor */
+@keyframes attack {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-12px) scale(1.05);
+  }
+  50% {
+    transform: translateY(6px) scale(0.98);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+  85% {
+    transform: translateX(4px);
+  }
+}
+
+/* Daño recibido: flash blanco + número de daño flota y desvanece */
+@keyframes damageFloat {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+/* KO / Fuera de combate: carta oscurece, rota levemente, se desvanece */
+@keyframes ko {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  60% {
+    transform: rotate(-8deg) scale(0.95);
+    filter: brightness(0.4);
+  }
+  100% {
+    transform: rotate(-12deg) scale(0.85);
+    opacity: 0;
+    filter: brightness(0.1);
+  }
+}
+
+/* Adjuntar energía: token vuela desde la mano al Pokémon */
+@keyframes attachEnergy {
+  0% {
+    transform: translateY(-30px) scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(4px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Tomar carta de premio: vuela hacia la mano del jugador */
+@keyframes takePrize {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120px) scale(0.7);
+    opacity: 0;
+  }
+}
+
+/* Hover sobre carta */
+@keyframes cardHover {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+/* Glow pulsante para turno activo */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px 2px var(--glow-active);
+  }
+  50% {
+    box-shadow: 0 0 24px 8px var(--glow-active);
+  }
+}
+
+/* Spin (loading states) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fade in (overlays/modals) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide up (modals) */
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Floating (gentle bobbing) */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Bounce (confirmations) */
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ===== Sudden Death overlay ===== */
+.board-container__sudden-death-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(120, 10, 10, 0.72);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 300ms ease-out;
+}
+
+.board-container__sudden-death-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 56px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #3b0a0a, #1a0404);
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 60px rgba(239, 68, 68, 0.5), 0 0 120px rgba(239, 68, 68, 0.2);
+  text-align: center;
+  animation: slideUp 300ms ease-out;
+}
+
+.board-container__sudden-death-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: #ef4444;
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.4);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.board-container__sudden-death-subtitle {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+  font-weight: 600;
+  color: var(--text-cream);
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* ===== Sudden Death round badge ===== */
+.board-container__sudden-death-badge {
+  position: fixed;
+  top: clamp(8px, 1vh, 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 4px 16px;
+  border-radius: 999px;
+  background: rgba(120, 10, 10, 0.82);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: clamp(0.65rem, 0.9vw, 0.8rem);
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+  animation: fadeIn 300ms ease-out;
+}
+
+/* ===== WebSocket connection status indicator ===== */
+.board-container__ws-indicator {
+  position: fixed;
+  bottom: clamp(8px, 1vh, 16px);
+  right: clamp(8px, 1vw, 16px);
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(8, 12, 24, 0.7);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-cream);
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  transition: opacity 300ms ease;
+}
+
+.board-container__ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.board-container__ws-dot--green {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+.board-container__ws-dot--yellow {
+  background: #eab308;
+  box-shadow: 0 0 6px rgba(234, 179, 8, 0.6);
+  animation: ws-pulse 1.2s ease-in-out infinite;
+}
+
+.board-container__ws-dot--red {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+.board-container__ws-label {
+  white-space: nowrap;
+}
+
+@keyframes ws-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Card Picker Overlay ───────────────────────────── */
+.board-container__card-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: overlayFadeIn 200ms ease forwards;
+}
+
+.board-container__card-picker {
+  background: var(--gb-surface);
+  border: 1px solid var(--gb-gold);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 0 40px rgba(212, 160, 48, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.board-container__card-picker-header {
+  text-align: center;
+}
+
+.board-container__card-picker-title {
+  font-family: Cinzel, serif;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--gold-bright);
+  margin: 0 0 0.25rem;
+}
+
+.board-container__card-picker-counter {
+  font-size: 0.85rem;
+  color: var(--text-cream);
+  opacity: 0.75;
+  margin: 0;
+}
+
+.board-container__card-picker-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.board-container__card-picker-item {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 150ms ease;
+  opacity: 0;
+  animation: cardReveal 300ms ease forwards;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+.board-container__card-picker-item:hover {
+  transform: translateY(-6px);
+}
+
+.board-container__card-picker-item--selected {
+  outline: 2px solid var(--gold-bright);
+  border-radius: 10px;
+  box-shadow: 0 0 16px rgba(240, 208, 96, 0.6);
+}
+
+.board-container__card-picker-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn--secondary {
+  background: transparent;
+  border: 1px solid var(--text-cream);
+  color: var(--text-cream);
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 150ms;
+}
+
+.btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Hint: tool ────────────────────────────────────── */
+.board-container__hint--tool {
+  border-color: var(--gb-gold);
+  color: var(--gb-gold);
+}
+
+/* ── Keyframes ─────────────────────────────────────── */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(40px) scale(0.85); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}

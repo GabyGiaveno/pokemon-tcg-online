@@ -1,0 +1,1 @@
+ALTER TABLE deck_card ALTER COLUMN quantity TYPE INTEGER;

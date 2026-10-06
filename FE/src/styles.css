@@ -1,0 +1,213 @@
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STYLES — Retro Arcade / dark navy palette
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Core palette: dark navy retro arcade ─────────────────── */
+  --gb-bg:            #0a0e1c;    /* very dark navy */
+  --gb-bg-dark:       #050810;    /* near-black blue */
+  --gb-surface:       #0f1630;    /* dark blue surface */
+  --gb-surface-alt:   #0a0f20;    /* alt dark blue */
+  --gb-text:          #d4c4a0;    /* cream */
+  --gb-text-dim:      #7a7a9a;    /* muted blue-grey */
+  --gb-text-bright:   #f0e8c8;    /* bright cream */
+  --gb-gold:          #d4a030;    /* gold — kept */
+  --gb-gold-dim:      #8a6a20;    /* dim gold — kept */
+  --gb-green:         #5a9a5a;    /* green — kept (positive actions) */
+  --gb-green-bright:  #7ad385;    /* bright green — kept */
+  --gb-red:           #cc5555;    /* red — kept */
+  --gb-red-dim:       #5a2020;    /* dark red — kept */
+  --gb-border:        #2a3a6a;    /* dark blue border */
+  --gb-border-light:  #3a5a8a;    /* medium blue border */
+  --gb-border-bright: #4a7aaa;    /* bright blue border */
+  --gb-shadow:        #020408;    /* blue-black shadow */
+  --gb-highlight:     rgba(80, 120, 255, 0.08);  /* blue highlight */
+
+  /* ── Tray/Inventory panel colors — dark blue arcade tray ──── */
+  --gb-tray-bg:        #141938;    /* dark blue tray */
+  --gb-tray-bg-alt:    #1a2145;    /* slightly lighter dark blue */
+  --gb-tray-bg-dark:   #0e1230;    /* darker blue */
+  --gb-tray-text:      #d4c4a0;    /* cream */
+  --gb-tray-text-dim:  #8a8ab0;    /* muted blue-grey */
+  --gb-tray-text-bright: #f0e8c8;  /* bright cream */
+  --gb-tray-border:    #3a5090;    /* blue border */
+  --gb-tray-inner-shadow: rgba(0, 0, 0, 0.4);  /* dark shadow */
+
+  /* ── Font stack ────────────────────────────────────────── */
+  --gb-font: 'Courier New', Courier, 'Lucida Console', monospace;
+  --gb-font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* ═══════════════════════════════════════════════════════════
+     BOARD DESIGN TOKENS (Pokémon TCG + Hearthstone theme).
+     Defined GLOBALLY: Angular emulated encapsulation scopes a
+     component-level `:root`, so these must live here to resolve
+     inside board-container AND player-zone / card components.
+     ═══════════════════════════════════════════════════════════ */
+  /* Wood frame */
+  --wood-dark: #3b1f0a;
+  --wood-light: #6b3a1f;
+  /* Gold ornaments */
+  --gold-light: #c9a84c;
+  --gold-bright: #f0d060;
+  /* Play surface */
+  --play-surface: #1c5230;
+  --play-deep: #0d2b18;
+  /* Team tints */
+  --rival-tint: rgba(180, 30, 30, 0.15);
+  --player-tint: rgba(20, 60, 140, 0.15);
+  /* Effects */
+  --glow-active: rgba(255, 220, 0, 0.6);
+  --text-cream: #f5e6c8;
+  --damage-red: #e84040;
+  /* Layout */
+  --board-perspective: 1600px;
+  --board-tilt: 12deg;
+  --board-frame: clamp(24px, 4vw, 64px);
+
+  /* ── Responsive layout tokens (Phased — pages will adopt progressively) ── */
+  --bp-mobile:  480px;
+  --bp-tablet:  768px;
+  --bp-desktop: 1024px;
+  --bp-wide:    1280px;
+
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-2xl:  48px;
+
+  --layout-max-width:  1200px;
+  --layout-gutter:     clamp(16px, 4vw, 48px);
+  --layout-header-h:   clamp(48px, 8vh, 80px);
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  font-family: var(--gb-font-ui);
+  background: var(--gb-bg-dark);
+  /* Subtle scanline texture — CSS only, no images */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.035) 2px,
+      rgba(0, 0, 0, 0.035) 4px
+    ),
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(60, 100, 200, 0.04) 0%,
+      transparent 70%
+    );
+  color: var(--gb-text);
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+}
+
+/* ── Custom scrollbar — GameBoy pixel style ─────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gb-bg-dark);
+  border: 1px solid var(--gb-border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gb-border-light);
+  border: 1px solid var(--gb-border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gb-border-bright);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gb-border-light) var(--gb-bg-dark);
+}
+
+/* ── Selection color ───────────────────────────────────── */
+::selection {
+  background: var(--gb-gold-dim);
+  color: var(--gb-text-bright);
+}
+
+/* ── Focus ring ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--gb-gold);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHARED CARD STYLES — base + cursor-tracking glow + hover lift
+   Applied via the `.card` utility class on any rendered card surface
+   (hand cards, bench cards, active Pokémon cards). Defined globally
+   because Angular's emulated view encapsulation prevents board-container
+   from styling elements inside child components.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.card {
+  position: relative;
+  width: 100px;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  will-change: transform;
+}
+
+/* Radial glow layer that tracks the cursor via --glow-x/--glow-y (set by appCardGlow). */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(255, 215, 0, 0.35),
+    transparent 60%
+  );
+  transition: opacity 200ms ease;
+}
+
+.card:hover {
+  transform: scale(1.05) translateY(-12px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(255, 215, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.card:hover::before {
+  opacity: 1;
+}

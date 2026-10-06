@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pokemon_tcg
+    username: pokemon_user
+    password: pokemon_pass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:prod-local-secret-change-me-min-32-chars}
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+
+pokemon-tcg:
+  api:
+    key: ${POKEMON_TCG_API_KEY:}
+
+logging:
+  level:
+    root: WARN
+    ar.edu.utn.frc.tup.piii: INFO

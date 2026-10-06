@@ -1,0 +1,77 @@
+<div class="profile">
+  <div class="particles">
+    @for (p of [1,2,3,4,5]; track p) {
+      <div class="particle" [style]="{
+        '--delay': p * 3 + 's',
+        '--x': (p * 18) % 100 + '%',
+        '--size': (8 + p * 3) + 'px',
+      }"></div>
+    }
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="avatar-inline">{{ (profile()?.username ?? 'E')[0] }}</div>
+      <div class="player-data">
+        <h2>{{ profile()?.username ?? 'Entrenador' }}</h2>
+        <span class="subtitle">
+          PERFIL DEL ENTRENADOR
+          @if (profile(); as p) {
+            · NIVEL {{ p.level }}
+          }
+        </span>
+        @if (profile(); as p) {
+          <div class="xp-bar">
+            <div class="xp-fill" [style.width.%]="p.xpPercent"></div>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="topbar-right">
+      <app-settings-menu />
+      <button class="nav-btn nav-btn-home" type="button" [routerLink]="['/lobby']" aria-label="Volver al lobby">
+        <span class="nav-btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11.5 12 4l9 7.5" />
+            <path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" />
+            <path d="M9 20v-6h6v6" />
+          </svg>
+        </span>
+        <span class="nav-btn-label">Volver al lobby</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    @if (profileError(); as error) {
+      <div class="profile-alert">{{ error }}</div>
+    }
+
+    @if (profile() && stats(); as data) {
+      <div class="grid-2col">
+        <!-- Row 1: Trainer Card + Stats -->
+        <app-trainer-card
+          [profile]="profile()!"
+          [currentSkin]="currentSkin()"
+          [skinIndex]="currentSkinIndex()"
+          [totalSkins]="skins().length"
+          [equiping]="equiping()"
+          (prevSkin)="prevSkin()"
+          (nextSkin)="nextSkin()"
+          (confirmSkin)="confirmSkin()"
+        />
+        <app-trainer-stats [stats]="stats()!" />
+
+        <!-- Row 2: Badges/Achievements (full width) -->
+        <app-trainer-badges [badges]="badges()" />
+        <app-trainer-achievements [achievements]="achievements()" />
+      </div>
+    } @else {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <span>{{ profileError() ? 'Mostrando información parcial...' : 'Cargando perfil del entrenador...' }}</span>
+      </div>
+    }
+  </main>
+
+</div>

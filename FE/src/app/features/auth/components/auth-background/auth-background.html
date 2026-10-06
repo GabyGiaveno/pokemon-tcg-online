@@ -1,0 +1,8 @@
+<div class="background">
+  <div class="aurora aurora-left"></div>
+  <div class="aurora aurora-right"></div>
+  <div class="grid"></div>
+  @for (particle of particles; track particle) {
+    <span class="particle" [style.--index]="particle"></span>
+  }
+</div>

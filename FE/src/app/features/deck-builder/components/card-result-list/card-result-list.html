@@ -1,0 +1,49 @@
+<div class="result-list">
+  @if (loading()) {
+    <div class="state-message">
+      <span class="state-spinner"></span>
+      Cargando cartas…
+    </div>
+  } @else if (error(); as err) {
+    <div class="state-message state-error">
+      <span class="state-error-icon">⚠</span>
+      <span>{{ err }}</span>
+      <button class="btn btn-retry" (click)="onRetryClick()">Reintentar carga</button>
+    </div>
+  } @else if (cards().length === 0) {
+    <div class="state-message state-empty">
+      <span class="state-empty-icon">☐</span>
+      No se encontraron cartas.
+    </div>
+  } @else {
+    <div class="card-grid">
+      @for (card of cards(); track card.id) {
+        <div class="card-grid-item">
+          <div class="card-grid-image-wrap">
+            <img
+              [src]="card.imageUrlSmall"
+              [alt]="card.name"
+              class="card-grid-image"
+              loading="lazy"
+              (error)="onImgError($event)"
+            />
+          </div>
+          <div class="card-grid-info">
+            <span class="card-grid-name" [title]="card.name">{{ card.name }}</span>
+            <span class="card-grid-meta">
+              {{ card.supertype }}
+              @if (card.types.length > 0) {
+                <span class="card-grid-type-dot" [style.background]="typeColor(card.types[0])"></span>
+                {{ card.types.join(', ') }}
+              }
+            </span>
+          </div>
+          <button class="btn btn-add" (click)="onAddClick(card)">
+            <span class="btn-add-icon">+</span>
+            AGREGAR
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

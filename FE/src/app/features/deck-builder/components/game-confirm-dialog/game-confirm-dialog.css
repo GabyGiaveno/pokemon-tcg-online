@@ -1,0 +1,162 @@
+/* ═══════════════════════════════════════════════════════════════════
+   GAME CONFIRM DIALOG — Pokedex modal
+   ═══════════════════════════════════════════════════════════════════ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 4, 12, 0.85);
+  animation: backdrop-fade-in 0.15s ease-out;
+}
+
+@keyframes backdrop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-panel {
+  width: 90%;
+  max-width: 420px;
+  padding: 24px;
+  background: var(--deck-panel-bg, #1a2a3e);
+  border: 1px solid var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0.5rem 1.5rem rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+  animation: panel-slide-in 0.2s ease-out;
+  position: relative;
+}
+
+@keyframes panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--deck-border, rgba(255, 255, 255, 0.08));
+}
+
+.modal-kicker {
+  color: var(--deck-gold, #d9b35b);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.modal-title {
+  margin: 0;
+  color: var(--deck-text, #f5f7fa);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Message ──────────────────────────────────────────────── */
+.modal-message {
+  margin: 0 0 20px;
+  color: var(--deck-text-secondary, #a9c0d8);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.6;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Actions ──────────────────────────────────────────────── */
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Cancel / ghost button */
+.modal-btn--cancel {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+  color: var(--deck-text-secondary, #a9c0d8);
+}
+
+.modal-btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: var(--deck-border-focus, rgba(255, 255, 255, 0.25));
+  color: var(--deck-text, #f5f7fa);
+  transform: translateY(-1px);
+}
+
+.modal-btn--cancel:active {
+  transform: translateY(0);
+}
+
+/* Confirm (green) */
+.modal-btn--confirm {
+  background: var(--deck-success, #5a9a5a);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f5f7fa;
+  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+
+.modal-btn--confirm:hover {
+  background: var(--deck-success-bright, #7ad385);
+  transform: translateY(-2px);
+  box-shadow: 0 0.35rem 0.75rem rgba(0, 0, 0, 0.3);
+}
+
+.modal-btn--confirm:active {
+  transform: translateY(0);
+  box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.2);
+}
+
+/* Danger (red) for destructive actions */
+.modal-btn--danger {
+  background: rgba(204, 85, 85, 0.15);
+  border-color: rgba(204, 85, 85, 0.3);
+  color: var(--deck-danger, #cc5555);
+}
+
+.modal-btn--danger:hover {
+  background: rgba(204, 85, 85, 0.3);
+  border-color: var(--deck-danger, #cc5555);
+  color: #ff7777;
+  transform: translateY(-2px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+
+.modal-btn--danger:active {
+  transform: translateY(0);
+  box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.15);
+}

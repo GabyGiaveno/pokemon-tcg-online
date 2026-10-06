@@ -1,0 +1,184 @@
+<div class="lobby">
+  <header class="topbar">
+    <div class="topbar-left topbar-left--clickable" [routerLink]="['/perfil']" title="Ver perfil">
+      <div class="avatar">{{ playerName[0] }}</div>
+      <div class="player-data">
+        <h2>{{ playerName }}</h2>
+        <div class="xp-bar"><div class="xp-fill" [style.width.%]="playerXp"></div></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <app-settings-menu />
+    </div>
+  </header>
+
+  <aside class="left-panel">
+    <div class="panel glass">
+      <div class="panel-title">ESTADÍSTICAS</div>
+      <div class="stat-row">
+        <span class="stat-label">Victorias</span>
+        <span class="stat-value">{{ stats()?.wins ?? 0 }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Derrotas</span>
+        <span class="stat-value">{{ stats()?.losses ?? 0 }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Racha</span>
+        <span class="stat-value">{{ stats()?.streak ?? 0 }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="center">
+    <div class="center-logo">POKÉMON</div>
+  </main>
+
+  <aside class="right-panel">
+    <div class="panel glass news-panel">
+      <div class="panel-title">NOTICIAS</div>
+
+      @if (currentNews(); as item) {
+        <div class="news-carousel">
+          <span class="news-badge news-badge--{{ item.category }}">{{ item.category }}</span>
+          <h3 class="news-title">{{ item.title }}</h3>
+          <p class="news-desc">{{ item.description }}</p>
+          <span class="news-date">{{ item.date }}</span>
+        </div>
+
+        <div class="news-controls">
+          <button class="news-arrow" type="button" (click)="prevNews()" aria-label="Anterior">‹</button>
+          <div class="news-dots">
+            @for (n of news(); track n.id; let i = $index) {
+              <button
+                class="news-dot"
+                [class.news-dot--active]="i === newsIndex()"
+                type="button"
+                (click)="goToNews(i)"
+                [attr.aria-label]="'Noticia ' + (i + 1)"
+              ></button>
+            }
+          </div>
+          <button class="news-arrow" type="button" (click)="nextNews()" aria-label="Siguiente">›</button>
+        </div>
+      } @else {
+        <p class="news-desc">Cargando noticias...</p>
+      }
+
+      <div class="lobby-meta">
+        <span>{{ availableGamesCount }} partida(s) disponibles</span>
+        <span>{{ loading() ? 'Actualizando...' : 'Estado en vivo' }}</span>
+      </div>
+    </div>
+
+    <button class="play-btn" type="button" appHoverSound (click)="toggleGamePanel()">JUGAR</button>
+
+    <button class="nav-btn" type="button" appHoverSound [routerLink]="['/pokedex']">Pokédex</button>
+    <button class="nav-btn" type="button" appHoverSound [routerLink]="['/perfil']">Perfil</button>
+    <button class="nav-btn" type="button" appHoverSound [routerLink]="['/decks']">Mis mazos</button>
+    <button class="nav-btn nav-btn--learn" type="button" appHoverSound [routerLink]="['/reglas']">📖 Aprender a jugar</button>
+  </aside>
+
+  
+
+  @if (showGamePanel()) {
+    <div class="game-overlay" (click)="toggleGamePanel()">
+      <div class="game-panel" (click)="$event.stopPropagation()">
+        <div class="game-panel-header">
+          <h2>{{ gameStep() === 1 ? 'Elegí tu mazo' : 'Partidas disponibles' }}</h2>
+          <div class="header-actions">
+            @if (gameStep() === 2) {
+              <button class="icon-sm" type="button" appHoverSound (click)="loadGames()" [disabled]="loading()" title="Refrescar">↻</button>
+            }
+            <button class="icon-sm" type="button" appHoverSound (click)="toggleGamePanel()" title="Cerrar">✕</button>
+          </div>
+        </div>
+
+        @if (gameStep() === 1) {
+          <!-- PASO 1: elegir mazo -->
+          <div class="deck-selector">
+            <label class="deck-selector-label">Tu mazo</label>
+
+            @if (decksLoading()) {
+              <div class="deck-empty">Cargando mazos...</div>
+            } @else if (validDecks().length === 0) {
+              <div class="deck-empty">
+                No tenés mazos válidos.
+                <a class="deck-empty-link" [routerLink]="['/decks']">Creá uno acá</a>.
+              </div>
+            } @else {
+              <div class="deck-option-list">
+                @for (deck of validDecks(); track deck.id) {
+                  <button
+                    type="button"
+                    class="deck-option"
+                    appHoverSound
+                    [class.deck-option--selected]="selectedDeckId() === deck.id"
+                    (click)="selectedDeckId.set(deck.id)"
+                  >
+                    @let preview = firstPreviewCard(deck);
+                    @if (preview) {
+                      <img
+                        [src]="preview.imageUrlSmall"
+                        [alt]="preview.cardName"
+                        class="deck-option-img"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <div class="deck-option-img-placeholder"></div>
+                    }
+                    <span class="deck-option-info">
+                      <span class="deck-option-name">{{ deck.name }}</span>
+                      <span class="deck-option-meta">{{ deck.cardCount }} cartas</span>
+                    </span>
+                    @if (selectedDeckId() === deck.id) {
+                      <span class="deck-option-check">✓</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <button class="action-btn" type="button" appHoverSound (click)="goToGames()" [disabled]="selectedDeckId() === null">Continuar →</button>
+        } @else {
+          <!-- PASO 2: partidas -->
+          <div class="selected-deck-bar">
+            <button class="back-link" type="button" appHoverSound (click)="backToDeckSelect()">← Cambiar mazo</button>
+            @if (selectedDeck(); as d) {
+              <span class="selected-deck-chip">Jugando con: <strong>{{ d.name }}</strong></span>
+            }
+          </div>
+
+          <button class="action-btn" type="button" appHoverSound (click)="createGame()" [disabled]="loading()">Crear partida</button>
+
+          <div class="games-list">
+            @for (game of games(); track game.gameId) {
+              <div class="game-row">
+                <div class="game-info">
+                  <strong>Partida {{ game.gameId.slice(0, 8) }}</strong>
+                  <span>{{ game.player1Username }} · {{ game.status }}</span>
+                </div>
+                <button class="join-btn" type="button" appHoverSound (click)="joinGame(game.gameId)" [disabled]="loading()">Unirse</button>
+              </div>
+            } @empty {
+              @if (!loading()) {
+                <div class="empty-msg">No hay partidas disponibles</div>
+              }
+            }
+            @if (!loading() && games().length === 0) {
+              <div class="empty-msg empty-msg--soft">Todavía no hay salas abiertas.</div>
+            }
+            @if (loading()) {
+              <div class="empty-msg">Cargando...</div>
+            }
+          </div>
+        }
+
+        @if (feedback(); as fb) {
+          <div class="toast" [class]="'toast ' + fb.type">{{ fb.message }}</div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,25 @@
+<div class="summary-panel">
+  <!-- Deck name display -->
+  <div class="summary-name-area">
+    <span class="summary-name-label">MAZO</span>
+    <span class="summary-name-value" [title]="deckName()">{{ deckName() || '— Sin nombre —' }}</span>
+  </div>
+
+  <!-- Stats row with game HUD feel -->
+  <div class="summary-stats">
+    <div class="stat stat-total"
+         [class.stat--empty]="totalCards() === 0"
+         [class.stat--valid]="totalCards() >= 1 && totalCards() <= 60"
+         [class.stat--over]="totalCards() > 60">
+      <span class="stat-label">TOTAL</span>
+      <span class="stat-value">{{ totalCards() }}</span>
+      <span class="stat-divider">/</span>
+      <span class="stat-max">60</span>
+    </div>
+    <div class="stat stat-unique">
+      <span class="stat-label">ÚNICAS</span>
+      <span class="stat-value">{{ uniqueCards() }}</span>
+    </div>
+  </div>
+
+</div>

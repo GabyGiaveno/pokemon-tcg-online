@@ -1,0 +1,216 @@
+/* ═══════════════════════════════════════════════════════════════════
+   DECK SUMMARY — Pokedex info & action panel
+   ═══════════════════════════════════════════════════════════════════ */
+
+.summary-panel {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Deck name ───────────────────────────────────────────── */
+.summary-name-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-name-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--deck-text-secondary, #a9c0d8);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.summary-name-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--deck-text, #f5f7fa);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Stats row ──────────────────────────────────────────────── */
+.summary-stats {
+  display: flex;
+  gap: 10px;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.stat-total {
+  flex: 1;
+}
+
+.stat-unique {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--deck-text-secondary, #a9c0d8);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--deck-text, #f5f7fa);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.stat-divider {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--deck-text-secondary, #a9c0d8);
+  line-height: 1;
+}
+
+.stat-max {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--deck-text-secondary, #a9c0d8);
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Stat visual states ───────────────────────────────────── */
+.stat--empty {
+  border-color: var(--deck-border-strong, rgba(255, 255, 255, 0.15));
+}
+.stat--empty .stat-value {
+  color: var(--deck-text-secondary, #a9c0d8);
+}
+
+.stat--valid {
+  border-color: var(--deck-success, #5a9a5a);
+  box-shadow: 0 0 0 1px rgba(90, 154, 90, 0.15);
+}
+.stat--valid .stat-value {
+  color: var(--deck-success-bright, #7ad385);
+}
+
+.stat--over {
+  border-color: var(--deck-danger, #cc5555);
+  box-shadow: 0 0 0 1px rgba(204, 85, 85, 0.2);
+  animation: stat-over-pulse 0.8s ease-in-out infinite alternate;
+}
+.stat--over .stat-value {
+  color: var(--deck-danger, #cc5555);
+}
+
+@keyframes stat-over-pulse {
+  from { box-shadow: 0 0 0 1px rgba(204,85,85,0.2); }
+  to   { box-shadow: 0 0 0 2px rgba(204,85,85,0.35); }
+}
+
+/* ── Action buttons ──────────────────────────────────────────── */
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Primary save button — Pokedex green */
+.btn-save {
+  background: var(--deck-success, #5a9a5a);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f5f7fa;
+  font-size: 0.85rem;
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+
+.btn-save:hover:not(:disabled) {
+  background: var(--deck-success-bright, #7ad385);
+  transform: translateY(-2px);
+  box-shadow: 0 0.35rem 0.75rem rgba(0, 0, 0, 0.3);
+}
+
+.btn-save:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.2);
+}
+
+.btn-save:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+/* Secondary clear button — gold outline */
+.btn-clear {
+  background: rgba(217, 179, 91, 0.1);
+  border-color: rgba(217, 179, 91, 0.3);
+  color: var(--deck-gold, #d9b35b);
+  box-shadow: 0 0.1rem 0.35rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-clear:hover:not(:disabled) {
+  background: rgba(217, 179, 91, 0.2);
+  border-color: var(--deck-gold, #d9b35b);
+  color: var(--deck-gold-hover, #ffe08a);
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.25);
+}
+
+.btn-clear:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-clear:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Save spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--deck-gold, #d9b35b);
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}

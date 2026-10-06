@@ -1,0 +1,63 @@
+<div class="panel glass">
+  <div class="panel-title">DATOS DEL ENTRENADOR</div>
+  @if (currentSkin().equipped) {
+    <div class="equipped-banner">SKIN EQUIPADA</div>
+  } @else {
+    <div class="equipped-banner equipped-banner--preview">Viendo skin: {{ currentSkin().name }}</div>
+  }
+  <div class="card-layout">
+    <div class="card-avatar">
+      <app-trainer-avatar
+        [skin]="currentSkin()"
+        [skinIndex]="skinIndex()"
+        [totalSkins]="totalSkins()"
+        (prev)="prevSkin.emit()"
+        (next)="nextSkin.emit()"
+      />
+    </div>
+    <div class="card-info">
+      <div class="info-row">
+        <span class="info-label">NOMBRE</span>
+        <span class="info-value">{{ profile().username }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">LEMA</span>
+        <span class="info-value info-value--muted">{{ profile().bio }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">REGISTRO</span>
+        <span class="info-value">{{ profile().createdAt | date:'mediumDate' }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">REGIÓN FAV.</span>
+        <span class="info-value">{{ profile().favoriteRegion }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">POKÉMON FAV.</span>
+        <span class="info-value">{{ profile().favoritePokemon }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">CARTAS</span>
+        <span class="info-value">{{ profile().totalCards }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">MAZOS</span>
+        <span class="info-value">{{ profile().decksCount }}</span>
+      </div>
+    </div>
+  </div>
+  @if (currentSkin().equipped) {
+    <button class="customize-btn customize-btn--equipped" type="button" disabled>
+      AVATAR CONFIRMADO ✓
+    </button>
+  } @else {
+    <button
+      class="customize-btn"
+      type="button"
+      [disabled]="equiping()"
+      (click)="confirmSkin.emit()"
+    >
+      {{ equiping() ? 'GUARDANDO...' : 'CONFIRMAR AVATAR' }}
+    </button>
+  }
+</div>

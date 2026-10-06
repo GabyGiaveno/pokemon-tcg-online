@@ -1,0 +1,29 @@
+<div class="modal-backdrop" (click)="onBackdropClick()">
+  <div class="modal-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <span class="modal-kicker">CONFIRMAR</span>
+      <h2 class="modal-title">{{ title() }}</h2>
+    </div>
+
+    <p class="modal-message">{{ message() }}</p>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="modal-btn modal-btn--cancel"
+        (click)="onCancel()"
+      >
+        {{ cancelText() }}
+      </button>
+      <button
+        type="button"
+        class="modal-btn"
+        [class.modal-btn--danger]="danger()"
+        [class.modal-btn--confirm]="!danger()"
+        (click)="onConfirm()"
+      >
+        {{ confirmText() }}
+      </button>
+    </div>
+  </div>
+</div>

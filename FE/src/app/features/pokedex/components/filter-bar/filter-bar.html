@@ -1,0 +1,59 @@
+<div class="filter-bar" role="search" aria-live="polite">
+  <div class="filter-bar-row">
+    <label class="search-field">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input
+        type="text"
+        placeholder="Buscar cartas..."
+        [value]="filters().name"
+        (input)="onSearchInput($any($event.target).value)"
+        aria-label="Buscar cartas por nombre"
+      />
+    </label>
+
+    <label class="set-field">
+      <span class="visually-hidden">Selecciona un set</span>
+      <select
+        [value]="filters().set ?? ''"
+        (change)="onSetChange($any($event.target).value)"
+        aria-label="Selecciona una expansión"
+      >
+        <option value="">Todas las expansiones</option>
+        @for (set of sets(); track set.id) {
+          <option [value]="set.id">{{ set.name }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="supertype-group" role="group" aria-label="Filtrar por supertype">
+      @for (st of supertypes; track st.id) {
+        <button
+          type="button"
+          class="supertype-chip"
+          appHoverSound
+          [class.active]="filters().supertype === st.id"
+          [attr.aria-pressed]="filters().supertype === st.id"
+          (click)="onSupertypeClick(st.id)"
+        >
+          <span aria-hidden="true">{{ st.icon }}</span> {{ st.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (activeChips().length > 0) {
+    <div class="active-filters" aria-label="Filtros activos">
+      @for (chip of activeChips(); track chip.kind) {
+        <button
+          type="button"
+          class="chip"
+          [style.--chip-color]="chip.color ?? 'var(--pokedex-gold)'"
+          (click)="removeChip.emit(chip)"
+        >
+          {{ chip.label }} <span aria-hidden="true">✕</span>
+        </button>
+      }
+      <button type="button" class="clear-btn" appHoverSound (click)="clearFilters.emit()">Limpiar filtros</button>
+    </div>
+  }
+</div>

@@ -1,0 +1,13 @@
+<app-auth-shell>
+  <section class="auth-page">
+    <header class="page-header">
+      <p class="eyebrow">Error 404</p>
+      <h2>Página no encontrada</h2>
+      <p>La ruta que ingresaste no existe o fue movida.</p>
+    </header>
+
+    <app-auth-feedback [feedback]="feedback()"></app-auth-feedback>
+
+    <a routerLink="/auth/login" class="primary-btn">Volver al login</a>
+  </section>
+</app-auth-shell>

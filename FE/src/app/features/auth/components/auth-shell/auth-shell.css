@@ -1,0 +1,94 @@
+.auth-shell {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.bg-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(rgba(5, 6, 17, 0.58), rgba(5, 6, 17, 0.76)),
+    url('/images/pokemon-unite-8705.jpg') center/cover no-repeat;
+  filter: blur(12px) saturate(0.85);
+  transform: scale(1.08);
+  opacity: 0.55;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 10, 24, 0.54);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  border-radius: 2rem;
+  color: #edf2ff;
+  max-height: calc(100dvh - 1rem);
+  overflow: hidden;
+}
+
+.card-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+}
+
+@media (max-width: 768px) {
+  .auth-card {
+    max-height: calc(100dvh - 1.4rem);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-shell {
+    padding: 0.35rem;
+  }
+
+  .auth-card {
+    width: min(100%, 420px);
+    padding: 0.85rem 0.9rem 0.9rem;
+    border-radius: 1.25rem;
+    gap: 0.6rem;
+    max-height: calc(100dvh - 0.7rem);
+  }
+
+  .bg-image {
+    filter: blur(8px) saturate(0.85);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-shell {
+    padding: 0;
+  }
+
+  .auth-card {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding: 0.75rem 0.8rem 0.8rem;
+    gap: 0.5rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bg-image {
+    filter: blur(4px) saturate(0.8);
+    opacity: 0.4;
+  }
+}

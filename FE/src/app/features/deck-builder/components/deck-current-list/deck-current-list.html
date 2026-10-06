@@ -1,0 +1,59 @@
+<div class="current-list">
+  @if (deckCards().length === 0) {
+    <div class="state-empty">
+      El mazo está vacío. Buscá cartas y agregalas desde el panel de búsqueda.
+    </div>
+  } @else {
+    <div class="deck-cards">
+      @for (entry of deckCards(); track entry.card.id) {
+        <div class="deck-card-item">
+          <div class="deck-card-image-wrap">
+            <img
+              [src]="entry.card.imageUrlSmall"
+              [alt]="entry.card.name"
+              class="deck-card-image"
+              loading="lazy"
+              (error)="onImgError($event)"
+            />
+          </div>
+
+          <div class="deck-card-info">
+            <span class="deck-card-name" [title]="entry.card.name">{{ entry.card.name }}</span>
+            <span class="deck-card-meta">
+              {{ entry.card.supertype }}
+              @if (entry.card.types.length > 0) {
+                · {{ entry.card.types.join(', ') }}
+              }
+            </span>
+          </div>
+
+          <div class="deck-card-controls">
+            <span class="deck-card-qty">
+              <span class="qty-value">{{ entry.quantity }}</span>
+            </span>
+            <div class="qty-buttons">
+              <button
+                class="btn btn-qty btn-qty-up"
+                (click)="onIncrease(entry.card.id)"
+                title="Aumentar cantidad (+1)"
+                aria-label="Aumentar cantidad de {{ entry.card.name }}"
+              >+</button>
+              <button
+                class="btn btn-qty btn-qty-down"
+                (click)="onDecrease(entry.card.id)"
+                title="Disminuir cantidad (-1)"
+                aria-label="Disminuir cantidad de {{ entry.card.name }}"
+              >−</button>
+            </div>
+            <button
+              class="btn btn-remove"
+              (click)="onRemove(entry.card.id)"
+              title="Quitar del mazo"
+              aria-label="Quitar {{ entry.card.name }} del mazo"
+            >✕</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

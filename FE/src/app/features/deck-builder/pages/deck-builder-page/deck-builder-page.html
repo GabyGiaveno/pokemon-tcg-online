@@ -1,0 +1,292 @@
+<div class="page-container">
+  <!-- ═══════════════════════════════════════════════════════════════
+       Game HUD Header
+       ═══════════════════════════════════════════════════════════════ -->
+  <header class="builder-header" aria-label="Panel de control del mazo">
+    <div class="header-title-block">
+      <span class="header-kicker">TCG Deck Builder</span>
+      <h1 class="page-title">{{ editingDeckId() ? 'Editar Mazo' : 'Crear Mazo' }}</h1>
+    </div>
+
+    <div class="header-nav">
+      <button type="button" class="btn btn-navigation btn-home" (click)="onNavigateHome()" aria-label="Volver al lobby">
+        <span class="back-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11.5 12 4l9 7.5" />
+            <path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" />
+            <path d="M9 20v-6h6v6" />
+          </svg>
+        </span>
+        <span class="back-label">Volver al lobby</span>
+      </button>
+      <button type="button" class="btn btn-navigation btn-my-decks" (click)="onNavigateToDecks()">MIS DECKS</button>
+    </div>
+
+    <div class="header-actions">
+      <app-settings-menu />
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Edit-mode loading / error states
+       ═══════════════════════════════════════════════════════════════ -->
+  @if (editingDeckId() && loadingDeck()) {
+    <div class="state-message state-loading">
+      <span class="state-icon">⟳</span>
+      Cargando mazo para editar…
+    </div>
+  } @else if (editingDeckId() && loadingDeckError(); as err) {
+    <div class="state-message state-error">
+      <span class="state-icon">✕</span>
+      {{ err }}
+    </div>
+  } @else {
+    <!-- ═══════════════════════════════════════════════════════════════
+         Three-column layout
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="deck-builder-layout" aria-label="Constructor de mazos">
+
+    <!-- ── Left: Filters ──────────────────────────────────────── -->
+    <aside class="builder-panel filters-panel" aria-label="Filtros de cartas">
+      <div class="panel-header">
+        <span class="panel-kicker">01</span>
+        <h2>Filtros</h2>
+      </div>
+
+      <app-card-search-panel
+        [searchTerm]="searchTerm()"
+        [loading]="loadingCards()"
+        (searchChange)="onSearchChange($event)"
+        (filterChange)="onFilterChange($event)"
+      />
+    </aside>
+
+    <!-- ── Center: Card results + current deck ────────────────── -->
+    <main class="builder-main" aria-label="Cartas y mazo actual">
+
+      <!-- Available cards -->
+      <section class="builder-panel available-cards-panel"
+               [class.panel--loading]="loadingCards()"
+               aria-labelledby="available-cards-title">
+        <div class="panel-header">
+          <span class="panel-kicker">02</span>
+          <h2 id="available-cards-title">Cartas disponibles</h2>
+          @if (totalResults() > 0 && !loadingCards()) {
+            <span class="panel-badge">{{ totalResults() }} resultados</span>
+          }
+        </div>
+
+        <app-card-result-list
+          [cards]="cards()"
+          [loading]="loadingCards()"
+          [error]="cardsLoadError()"
+          (addCard)="onAddCard($event)"
+          (retry)="onRetry()"
+        />
+
+        @if (totalPages() > 1) {
+          <div class="catalog-pagination" aria-label="Paginación del catálogo">
+            <button
+              type="button"
+              class="pagination-btn"
+              [disabled]="!canGoPrevious()"
+              (click)="onPreviousPage()"
+            >
+              ◀ ANTERIOR
+            </button>
+
+            <div class="pagination-status" aria-live="polite">
+              <span>{{ displayCurrentPage() }} / {{ totalPages() }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="pagination-btn"
+              [disabled]="!canGoNext()"
+              (click)="onNextPage()"
+            >
+              SIGUIENTE ▶
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Current deck -->
+      <section class="builder-panel current-deck-panel"
+               [class.panel--empty]="deckCards().length === 0"
+               aria-labelledby="current-deck-title">
+        <div class="panel-header panel-header-split">
+          <div>
+            <span class="panel-kicker">03</span>
+            <h2 id="current-deck-title">Mazo actual</h2>
+          </div>
+          @if (deckCards().length > 0) {
+            <span class="deck-count-badge">{{ totalCards() }}/60</span>
+          }
+        </div>
+
+        <div class="deck-content-scroll">
+          @if (deckCards().length === 0) {
+            <div class="empty-deck-slots" aria-label="Slots vacíos del mazo">
+              @for (slot of [1, 2, 3, 4, 5, 6, 7, 8]; track slot) {
+                <div class="empty-deck-slot" aria-hidden="true">
+                  <span class="empty-slot-icon">+</span>
+                  <span class="empty-slot-label">CARTA</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <app-deck-current-list
+              [deckCards]="deckCards()"
+              (increaseQuantity)="onIncreaseQuantity($event)"
+              (decreaseQuantity)="onDecreaseQuantity($event)"
+              (removeCard)="onRemoveCard($event)"
+            />
+          }
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Right: Info / Actions ──────────────────────────────── -->
+    <aside class="builder-panel info-panel" aria-label="Información y acciones del mazo">
+      <div class="panel-header">
+        <span class="panel-kicker">04</span>
+        <h2>Info / acciones</h2>
+      </div>
+
+      <div class="info-panel-content">
+        <app-deck-summary
+          [deckName]="deckForm.getRawValue().name"
+          [totalCards]="totalCards()"
+          [uniqueCards]="uniqueCards()"
+          [canSave]="canSave()"
+          [saving]="savingDeck()"
+          [canClear]="deckCards().length > 0"
+          [isEditMode]="isEditMode()"
+          (save)="onSave()"
+          (clearDeck)="onClearDeck()"
+        />
+
+        <form [formGroup]="deckForm" class="name-form">
+          <div class="form-field">
+            <label for="deck-name">NOMBRE DEL MAZO</label>
+            <input
+              id="deck-name"
+              type="text"
+              formControlName="name"
+              placeholder="Ej: Mazo Eléctrico"
+              maxlength="100"
+              class="form-input"
+            />
+            @if (deckForm.get('name')?.invalid && deckForm.get('name')?.touched) {
+              @if (deckForm.get('name')?.errors?.['required']) {
+                <span class="field-error">El nombre es obligatorio.</span>
+              }
+              @if (deckForm.get('name')?.errors?.['maxlength']) {
+                <span class="field-error">Máximo 100 caracteres.</span>
+              }
+            }
+          </div>
+        </form>
+
+        <div class="deck-validation-area" aria-label="Validación del mazo">
+          <app-deck-validation-panel
+            [validation]="validationResult()"
+            [totalCards]="totalCards()"
+          />
+        </div>
+
+        <div class="draft-clarification">
+          Podés guardar el mazo aunque esté incompleto. Para usarlo en una partida debe pasar la validación.
+        </div>
+
+        <!-- Status messages -->
+        @if (savingDeck()) {
+          <div class="message message-loading">
+            <span class="message-icon">⟳</span>
+            Guardando mazo…
+          </div>
+        }
+
+        @if (saveSuccess(); as message) {
+          <div class="message message-success">
+            <span class="message-icon">✓</span>
+            {{ message }}
+          </div>
+        }
+
+        @if (saveError(); as err) {
+          <div class="message message-error">
+            <span class="message-icon">✕</span>
+            {{ err }}
+          </div>
+        }
+
+        <div class="deck-actions-bottom">
+          <div class="save-action-row">
+            <button
+              class="btn btn-save"
+              [disabled]="!canSave() || savingDeck()"
+              (click)="onSave()"
+            >
+              @if (savingDeck()) {
+                <span class="btn-spinner"></span>
+                {{ isEditMode() ? 'ACTUALIZANDO…' : 'GUARDANDO…' }}
+              } @else {
+                {{ isEditMode() ? 'ACTUALIZAR MAZO' : 'GUARDAR MAZO' }}
+              }
+            </button>
+
+            <button
+              type="button"
+              class="deck-rules-help"
+              aria-label="Ver requisitos para que un mazo sea válido"
+            >
+              ?
+              <span class="deck-rules-tooltip" role="tooltip">
+                <strong>Para jugar, el mazo debe tener:</strong>
+                <span>• Exactamente 60 cartas.</span>
+                <span>• Máximo 4 copias de una misma carta, salvo energías básicas.</span>
+                <span>• Al menos 1 Pokémon Básico.</span>
+              </span>
+            </button>
+          </div>
+
+          <button
+            class="btn btn-clear"
+            [disabled]="deckCards().length === 0 || savingDeck()"
+            (click)="onClearDeck()"
+          >
+            LIMPIAR MAZO
+          </button>
+        </div>
+      </div>
+    </aside>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Navigate away confirmation modal
+       ═══════════════════════════════════════════════════════════════ -->
+  @if (navigateHomePending()) {
+    <app-game-confirm-dialog
+      title="Salir del constructor"
+      message="Los cambios no guardados se perderán. ¿Querés volver al Home?"
+      confirmText="IR AL HOME"
+      cancelText="SEGUIR EDITANDO"
+      (confirm)="onConfirmNavigateHome()"
+      (cancel)="onCancelNavigateHome()"
+    />
+  }
+
+  @if (navigateToDecksPending()) {
+    <app-game-confirm-dialog
+      title="Salir del constructor"
+      message="Los cambios no guardados se perderán. ¿Querés ir a Mis Decks?"
+      confirmText="IR A MIS DECKS"
+      cancelText="SEGUIR EDITANDO"
+      (confirm)="onConfirmNavigateToDecks()"
+      (cancel)="onCancelNavigateToDecks()"
+    />
+  }
+</div>

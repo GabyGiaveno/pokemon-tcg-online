@@ -1,0 +1,88 @@
+.card-preview {
+  --accent-color: #a8a878;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  border-radius: 0.6rem;
+  border: 2px solid color-mix(in srgb, var(--accent-color) 45%, var(--pokedex-gold) 25%);
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--pokedex-grid));
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.card-preview:hover {
+  transform: translateY(-3px);
+  border-color: var(--pokedex-gold-hover);
+  box-shadow: 0 0.4rem 0.9rem rgba(0, 0, 0, 0.35), 0 0 0.6rem var(--pokedex-gold-hover);
+}
+
+.card-preview.selected {
+  border-color: var(--pokedex-gold-active);
+  box-shadow: 0 0 0 2px var(--pokedex-gold-active), 0 0.4rem 0.9rem rgba(0, 0, 0, 0.35);
+}
+
+.card-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent-color) 30%, #0d1117);
+}
+
+.card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card-image.image-broken {
+  display: none;
+}
+
+.image-fallback {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--pokedex-text-secondary);
+}
+
+.card-image.image-broken + .image-fallback {
+  display: flex;
+}
+
+.hp-badge {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  z-index: 1;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--pokedex-text);
+  background: color-mix(in srgb, var(--accent-color) 65%, #000 25%);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+.card-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pokedex-text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
